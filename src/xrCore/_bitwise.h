@@ -115,19 +115,4 @@ IC float apx_InvSqrt(const float& n)
     float y = *(float*)&tmp;
     return y * (1.47f - 0.47f * n * y * y);
 }
-// Only for [0..1] (positive) range
-IC float apx_asin(const float x)
-{
-    const float c1 = 0.892399f;
-    const float c3 = 1.693204f;
-    const float c5 = -3.853735f;
-    const float c7 = 2.838933f;
-
-    const float x2 = x * x;
-    const float d = x * (c1 + x2 * (c3 + x2 * (c5 + x2 * c7)));
-
-    return d;
-}
-// Only for [0..1] (positive) range
-IC float apx_acos(const float x) { return PI_DIV_2 - apx_asin(x); }
 #endif
