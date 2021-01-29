@@ -20,7 +20,7 @@ namespace strconcat_error
 {
 void process(u32 const index, u32 const count, pcstr* strings)
 {
-    u32 const max_string_size = 1024;
+    size_t const max_string_size = 1024;
     pstr temp = (pstr)xr_alloca((count * (max_string_size + 4) + 1) * sizeof(**strings));
     pstr k = temp;
     *k++ = '[';

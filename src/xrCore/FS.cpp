@@ -190,7 +190,7 @@ void* FileDecompress(pcstr fn, pcstr sign, size_t* size)
     R_ASSERT(strncmp(M, F, 8) == 0);
 
     void* ptr = 0;
-    const size_t SZ = _readLZ(H, ptr, _filelength(H) - 8);
+    const size_t SZ = _readLZ(H, ptr, static_cast<size_t>(_filelength(H)) - 8);
     _close(H);
     if (size)
         *size = SZ;
@@ -460,7 +460,7 @@ void IReader::r_stringZ(char* dest, size_t tgt_sz)
 void IReader::r_stringZ(shared_str& dest)
 {
     dest = (char*)(data + Pos);
-    Pos += (dest.size() + 1);
+    Pos += (static_cast<size_t>(dest.size()) + 1);
 }
 void IReader::r_stringZ(xr_string& dest)
 {

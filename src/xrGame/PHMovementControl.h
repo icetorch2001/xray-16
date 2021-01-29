@@ -231,8 +231,8 @@ public:
     void Calculate(Fvector& vAccel, const Fvector& camDir, float ang_speed, float jump, float dt, bool bLight);
     void Calculate(const xr_vector<DetailPathManager::STravelPathPoint>& path, // in path
         float speed, // in speed
-        u32& travel_point, // in- travel start, out - current trev point
-        float& precesition // in- tolerance, out - precesition
+        size_t& travel_point, // in- travel start, out - current trev point
+        float& precesition   // in- tolerance, out - precesition
         );
     void AddControlVel(const Fvector& vel);
     void SetVelocityLimit(float val);
@@ -302,5 +302,5 @@ private:
     void actor_calculate(Fvector& vAccel, const Fvector& camDir, float ang_speed, float jump, float dt, bool bLight);
     void UpdateCollisionDamage();
     bool MakeJumpPath(
-        xr_vector<DetailPathManager::STravelPathPoint>& out_path, u32& travel_point, Fvector& dist_to_enemy);
+        xr_vector<DetailPathManager::STravelPathPoint>& out_path, size_t& travel_point, Fvector& dist_to_enemy);
 };

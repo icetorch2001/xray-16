@@ -965,7 +965,7 @@ inline void PPM_CONTEXT::update2(STATE* p)
 inline SEE2_CONTEXT* PPM_CONTEXT::makeEscFreq2() const
 {
     u8* pb = (u8*)Stats;
-    u32 t = 2 * NumStats;
+    size_t t = 2 * static_cast<size_t>(NumStats);
     PrefetchData(pb);
     PrefetchData(pb + t);
     PrefetchData(pb += 2 * t);
@@ -975,7 +975,7 @@ inline SEE2_CONTEXT* PPM_CONTEXT::makeEscFreq2() const
     {
         t = Suffix->NumStats;
         psee2c = SEE2Cont[QTable[NumStats + 2] - 3] + (SummFreq > 11 * (NumStats + 1));
-        psee2c += 2 * (2 * NumStats < t + NumMasked) + Flags;
+        psee2c += 2 * static_cast<size_t>(2 * static_cast<size_t>(NumStats) < t + NumMasked) + static_cast<size_t>(Flags);
         SubRange.scale = psee2c->getMean();
     }
     else

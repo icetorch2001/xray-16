@@ -262,7 +262,7 @@ void CPHMovementControl::UpdateCollisionDamage()
 #include "xrCore/_vector3d_ext.h"
 
 bool CPHMovementControl::MakeJumpPath(
-    xr_vector<DetailPathManager::STravelPathPoint>& out_path, u32& travel_point, Fvector& out_deviation)
+    xr_vector<DetailPathManager::STravelPathPoint>& out_path, size_t& travel_point, Fvector& out_deviation)
 {
     if (!m_character->JumpState())
         return false;
@@ -319,7 +319,7 @@ bool CPHMovementControl::MakeJumpPath(
 }
 
 void CPHMovementControl::Calculate(
-    const xr_vector<DetailPathManager::STravelPathPoint>& in_path, float speed, u32& travel_point, float& precision)
+    const xr_vector<DetailPathManager::STravelPathPoint>& in_path, float speed, size_t& travel_point, float& precision)
 {
 #ifdef DEBUG
     if (debug_output().ph_dbg_draw_mask1().test(ph_m1_DbgTrackObject) && (!!pObject->cName()) &&

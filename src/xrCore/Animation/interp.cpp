@@ -270,9 +270,9 @@ float evalEnvelope(CEnvelope* env, float time)
     // find the first and last keys
     int sz = env->keys.size();
     skey = env->keys[0];
-    ekey = env->keys[sz - 1];
+    ekey = env->keys[static_cast<size_t>(sz) - 1];
     skey_n = env->keys[1];
-    ekey_p = env->keys[sz - 2];
+    ekey_p = env->keys[static_cast<size_t>(sz) - 2];
 
     // use pre-behavior if time is before first key time
     if (time < skey->time)
@@ -320,16 +320,16 @@ float evalEnvelope(CEnvelope* env, float time)
     }
     // get the endpoints of the interval being evaluated
     int k = 0;
-    while (time > env->keys[k + 1]->time)
+    while (time > env->keys[static_cast<size_t>(k) + 1]->time)
         k++;
     VERIFY((k + 1) < sz);
 
-    key1 = env->keys[k + 1];
+    key1 = env->keys[static_cast<size_t>(k) + 1];
     key0 = env->keys[k];
     if (k > 0)
-        key0_p = env->keys[k - 1];
+        key0_p = env->keys[static_cast<size_t>(k) - 1];
     if ((k + 2) < sz)
-        key1_n = env->keys[k + 2];
+        key1_n = env->keys[static_cast<size_t>(k) + 2];
 
     // check for singularities first
     if (time == key0->time)

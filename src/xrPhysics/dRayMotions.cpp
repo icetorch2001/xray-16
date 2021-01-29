@@ -28,9 +28,9 @@ int dCollideRMB(dxGeom* o1, dxGeom* o2, int flags, dContactGeom* contact, int sk
 {
     dxRayMotions* rm = (dxRayMotions*)dGeomGetClassData(o1);
     int ret = dCollideRayBox(rm->ray, o2, flags, contact, skip);
-    for (int i = 0; i < ret; i++)
+    for (size_t i = 0; i < ret; i++)
     {
-        dContactGeom* c = CONTACT(contact, skip * i);
+        dContactGeom* c = CONTACT(contact, static_cast<size_t>(skip) * i);
         c->g1 = rm->ray_ownwer;
         // c->depth*=60.f;
     }
@@ -62,9 +62,9 @@ int dCollideRMCyl(dxGeom* o1, dxGeom* o2, int flags, dContactGeom* contact, int 
 {
     dxRayMotions* rm = (dxRayMotions*)dGeomGetClassData(o1);
     int ret = dCollideCylRay(o2, rm->ray, flags, contact, skip);
-    for (int i = 0; i < ret; i++)
+    for (size_t i = 0; i < ret; i++)
     {
-        dContactGeom* c = CONTACT(contact, skip * i);
+        dContactGeom* c = CONTACT(contact, static_cast<size_t>(skip) * i);
         revert_contact(c);
         c->g1 = rm->ray_ownwer;
     }
