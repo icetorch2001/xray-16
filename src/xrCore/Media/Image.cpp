@@ -54,7 +54,7 @@ void Image::SaveTGA(TWriter& writerFunc, ImageFormat format, bool align)
         int paddingSize = align ? 4 - (width * 3 & 3) : 0;
         for (int j = 0; j < height; j++)
         {
-            u8* p = (u8*)data + scanLength * j;
+            u8* p = (u8*)data + static_cast<size_t>(scanLength) * j;
             for (int i = 0; i < width; i++)
             {
                 u8 buffer[3] = {p[0], p[1], p[2]};
@@ -77,7 +77,7 @@ void Image::SaveTGA(TWriter& writerFunc, ImageFormat format, bool align)
         {
             for (int j = 0; j < height; j++)
             {
-                u8* p = (u8*)data + scanLength * j;
+                u8* p = (u8*)data + static_cast<size_t>(scanLength) * j;
                 for (int i = 0; i < width; i++)
                 {
                     u8 buffer[4] = {p[0], p[1], p[2], 0xff};

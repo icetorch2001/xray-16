@@ -189,7 +189,7 @@ bool CControlPathBuilder::is_path_end(float dist_to_end)
     // count distance from current object position to the path end
     float cur_dist_to_end =
         object().Position().distance_to(detail().path()[detail().curr_travel_point_index() + 1].position);
-    for (u32 i = detail().curr_travel_point_index() + 1; i < detail().path().size() - 1; i++)
+    for (size_t i = detail().curr_travel_point_index() + 1; i < detail().path().size() - 1; i++)
     {
         cur_dist_to_end += detail().path()[i].position.distance_to(detail().path()[i + 1].position);
         if (cur_dist_to_end > dist_to_end)

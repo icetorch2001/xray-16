@@ -17,7 +17,7 @@ bool CEffectorFall::ProcessCam(SCamEffectorInfo& info)
 {
     fPhase += FALL_SPEED * Device.fTimeDelta;
     if (fPhase < 1)
-        info.p.y -= FALL_MAXDIST * fPower * _sin(M_PI * fPhase + M_PI);
+        info.p.y -= FALL_MAXDIST * fPower * static_cast<float>(_sin(M_PI * fPhase + M_PI));
     else
         fLifeTime = -1;
     return TRUE;

@@ -71,7 +71,7 @@ public:
         if (out_iterator == out_end)
         {
             u32 out_size = u32(out_end - out_start);
-            out_start = (u8*)xr_realloc(out_start, out_size + 1024);
+            out_start = (u8*)xr_realloc(out_start, static_cast<size_t>(out_size) + 1024);
             out_iterator = out_start + out_size;
             out_end = out_iterator + 1024;
         }

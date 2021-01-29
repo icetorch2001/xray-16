@@ -193,7 +193,7 @@ bool CDetailPathManager::build_circle_trajectory(
     curr_pos.set(position.position.x, 0.f, position.position.y);
     curr_vertex_id = position.vertex_id;
     float angle = position.angle;
-    int size = path ? (int)path->size() : -1;
+    int64_t size = path ? (int)path->size() : -1;
 
     if (!fis_zero(direction.square_magnitude()))
         direction.normalize();
@@ -201,7 +201,7 @@ bool CDetailPathManager::build_circle_trajectory(
         direction.set(1.f, 0.f);
 
     float sina, cosa, sinb, cosb, sini, cosi, temp;
-    int n;
+    int64_t n;
     if (fis_zero(position.angular_velocity))
         n = 1;
     else
@@ -217,7 +217,7 @@ bool CDetailPathManager::build_circle_trajectory(
 #endif
         n = !m ? 1 : m;
     }
-    int k = vertex_id ? 0 : -1;
+    int64_t k = vertex_id ? 0 : -1;
 
     if (path && 
         (size + n + k) >= 0 ) //prevent crach due reserve() call with arg < 0
@@ -747,7 +747,7 @@ void CDetailPathManager::postprocess_key_points(const xr_vector<u32>& level_path
     if (m_key_points[m_key_points.size() - 2].position.similar(m_key_points[m_key_points.size() - 1].position, EPS_S))
         m_key_points.pop_back();
 
-    for (int i = 1, n = (int)m_key_points.size() - 1; i < n; ++i)
+    for (size_t i = 1, n = (int)m_key_points.size() - 1; i < n; ++i)
     {
         STravelPoint key_point0 =
             compute_better_key_point(m_key_points[i - 1], m_key_points[i], m_key_points[i + 1], false);

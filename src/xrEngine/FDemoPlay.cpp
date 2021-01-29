@@ -124,9 +124,9 @@ void CDemoPlay::stat_Stop()
     const u32 iAvgFPS = _max((u32)rfps_average, 10);
     const u32 WindowSize = _max(16, iAvgFPS / 2);
 
-    if (stat_table.size() > WindowSize * 4)
+    if (stat_table.size() > static_cast<size_t>(WindowSize) * 4)
     {
-        for (u32 it = 2; it < stat_table.size() - WindowSize + 1; it++)
+        for (size_t it = 2; it < stat_table.size() - WindowSize + 1; it++)
         {
             float fTime = 0;
             for (u32 i = 0; i < WindowSize; ++i)

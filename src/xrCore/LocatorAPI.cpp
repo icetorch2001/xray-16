@@ -1323,7 +1323,7 @@ void CLocatorAPI::file_from_archive(IReader*& R, pcstr fname, const file& desc)
 {
     // Archived one
     archive& A = m_archives[desc.vfs];
-    size_t start = desc.ptr / dwAllocGranularity * dwAllocGranularity;
+    size_t start = desc.ptr / static_cast<size_t>(dwAllocGranularity) * static_cast<size_t>(dwAllocGranularity);
     size_t end = (desc.ptr + desc.size_compressed) / dwAllocGranularity;
     if ((desc.ptr + desc.size_compressed) % dwAllocGranularity)
         end += 1;

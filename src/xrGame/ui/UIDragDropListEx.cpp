@@ -863,7 +863,7 @@ void CUICellContainer::GetTexUVLT(Fvector2& uv, u32 col, u32 row, u8 select_mode
 void CUICellContainer::SetCellsCapacity(const Ivector2& c)
 {
     m_cellsCapacity = c;
-    m_cells.resize(c.x * c.y);
+    m_cells.resize(static_cast<size_t>(c.x) * static_cast<size_t>(c.y));
     ReinitSize();
 }
 
@@ -893,7 +893,7 @@ CUICell& CUICellContainer::GetCellIdx(size_t idx)
 CUICell& CUICellContainer::GetCellAt(const Ivector2& pos)
 {
     R_ASSERT(ValidCell(pos));
-    CUICell& c = m_cells[m_cellsCapacity.x * pos.y + pos.x];
+    CUICell& c = m_cells[static_cast<size_t>(m_cellsCapacity.x) * static_cast<size_t>(pos.y) + static_cast<size_t>(pos.x)];
     return c;
 }
 

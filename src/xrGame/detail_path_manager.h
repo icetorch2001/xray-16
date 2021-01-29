@@ -79,7 +79,7 @@ public:
 
 protected:
     VELOCITIES m_movement_params;
-    u32 m_current_travel_point;
+    size_t m_current_travel_point;
 
 private:
     enum EDirectionType
@@ -202,7 +202,7 @@ public:
     IC bool completed(const Fvector& position, bool bRealCompleted, const u32& travel_point_point_index) const;
     IC bool completed(const Fvector& position, bool bRealCompleted = true) const;
     bool valid(const Fvector& position) const;
-    IC u32 curr_travel_point_index() const;
+    IC size_t curr_travel_point_index() const;
 
 public:
     IC const xr_vector<STravelPathPoint>& path() const;

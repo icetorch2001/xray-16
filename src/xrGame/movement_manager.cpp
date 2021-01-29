@@ -280,7 +280,7 @@ bool CMovementManager::distance_to_destination_greater(const float& distance_to_
         return (true);
 
     float accumulator = 0.f;
-    for (u32 i = detail().curr_travel_point_index(), n = detail().path().size() - 1; i < n; ++i)
+    for (size_t i = detail().curr_travel_point_index(), n = detail().path().size() - 1; i < n; ++i)
     {
         accumulator += detail().path()[i].position.distance_to(detail().path()[i + 1].position);
         if (accumulator >= distance_to_check)

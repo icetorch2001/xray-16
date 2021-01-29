@@ -338,7 +338,7 @@ public:
     {
         u32 mtlCount = materials.size();
         R_ASSERT(i0 < mtlCount && i1 < mtlCount);
-        return material_pairs_rt[i1 * mtlCount + i0];
+        return material_pairs_rt[static_cast<size_t>(i1) * mtlCount + static_cast<size_t>(i0)];
     }
 
     GameMtlPairIt FirstMaterialPair() { return material_pairs.begin(); }
