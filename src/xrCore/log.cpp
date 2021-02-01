@@ -81,7 +81,7 @@ void Log(const char* s)
 {
     int i, j;
 
-    u32 length = xr_strlen(s);
+    size_t length = xr_strlen(s);
 #ifndef _EDITOR
     PSTR split = (PSTR)xr_alloca((length + 1) * sizeof(char));
 #else

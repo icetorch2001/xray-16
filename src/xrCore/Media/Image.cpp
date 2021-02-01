@@ -41,7 +41,7 @@ void Image::SaveTGA(TWriter& writerFunc, ImageFormat format, bool align)
     hdr.ImageType = 2; // uncompressed true-color image
     hdr.Width = width;
     hdr.Height = height;
-    int scanLength = width * channelCount;
+    size_t scanLength = static_cast<size_t>(width) * static_cast<size_t>(channelCount);
     switch (format)
     {
     case ImageFormat::RGB8:
@@ -52,7 +52,7 @@ void Image::SaveTGA(TWriter& writerFunc, ImageFormat format, bool align)
         writerFunc(&hdr, sizeof(hdr));
         int paddingBuf = 0;
         int paddingSize = align ? 4 - (width * 3 & 3) : 0;
-        for (int j = 0; j < height; j++)
+        for (size_t j = 0; j < height; j++)
         {
             u8* p = (u8*)data + scanLength * j;
             for (int i = 0; i < width; i++)

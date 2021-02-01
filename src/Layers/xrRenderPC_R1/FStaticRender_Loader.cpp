@@ -238,8 +238,8 @@ void CRender::LoadBuffers(CStreamReader* base_fs, bool alternative)
             //.????????? remove T&B from _DC[]
 
             // count, size
-            u32 vCount = fs->r_u32();
-            u32 vSize = GetDeclVertexSize(dcl, 0);
+            size_t vCount = fs->r_u32();
+            size_t vSize = GetDeclVertexSize(dcl, 0);
             Msg("* [Loading VB] %d verts, %d Kb", vCount, (vCount * vSize) / 1024);
 
             // Create and fill
@@ -268,7 +268,7 @@ void CRender::LoadBuffers(CStreamReader* base_fs, bool alternative)
         _IB.resize(count);
         for (u32 i = 0; i < count; i++)
         {
-            u32 iCount = fs->r_u32();
+            size_t iCount = fs->r_u32();
             Msg("* [Loading IB] %d indices, %d Kb", iCount, (iCount * 2) / 1024);
 
             // Create and fill

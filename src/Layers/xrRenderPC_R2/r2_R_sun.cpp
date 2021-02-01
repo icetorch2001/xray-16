@@ -559,7 +559,7 @@ public:
 
             // register edges
             xr_vector<int>& plist = polys[it].points;
-            for (int p = 0; p < int(plist.size()); p++)
+            for (size_t p = 0; p < int(plist.size()); p++)
             {
                 _edge E(plist[p], plist[(p + 1) % plist.size()], marker);
                 bool found = false;

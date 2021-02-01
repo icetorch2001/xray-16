@@ -108,8 +108,8 @@ bool CMovementManager::move_along_path() const
     return (true);
 }
 
-Fvector CMovementManager::path_position(const float& velocity, const Fvector& position, const float& time_delta,
-    u32& current_travel_point, float& dist, float& dist_to_target, Fvector& dir_to_target)
+Fvector CMovementManager::path_position(const float& velocity, const Fvector& position,
+ const float& time_delta, size_t & current_travel_point, float& dist, float& dist_to_target, Fvector& dir_to_target)
 {
     VERIFY(current_travel_point < (detail().path().size() - 1));
 
@@ -189,7 +189,7 @@ Fvector CMovementManager::path_position(const float& time_to_check)
     Fvector dir_to_target;
     float dist_to_target;
     float dist;
-    u32 current_travel_point = detail().m_current_travel_point;
+    size_t current_travel_point = detail().m_current_travel_point;
     return (path_position(old_desirable_speed(), object().Position(), time_to_check, current_travel_point, dist,
         dist_to_target, dir_to_target));
 }
@@ -243,7 +243,7 @@ void CMovementManager::move_along_path(CPHMovementControl* movement_control, Fve
     // position_computation
     Fvector dir_to_target;
     float dist_to_target;
-    u32 current_travel_point = detail().m_current_travel_point;
+    size_t current_travel_point = detail().m_current_travel_point;
     dest_position = path_position(old_desirable_speed(), object().Position(), time_delta, current_travel_point, dist,
         dist_to_target, dir_to_target);
 

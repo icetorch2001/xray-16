@@ -747,7 +747,7 @@ void CDetailPathManager::postprocess_key_points(const xr_vector<u32>& level_path
     if (m_key_points[m_key_points.size() - 2].position.similar(m_key_points[m_key_points.size() - 1].position, EPS_S))
         m_key_points.pop_back();
 
-    for (int i = 1, n = (int)m_key_points.size() - 1; i < n; ++i)
+    for (size_t i = 1, n = (int)m_key_points.size() - 1; i < n; ++i)
     {
         STravelPoint key_point0 =
             compute_better_key_point(m_key_points[i - 1], m_key_points[i], m_key_points[i + 1], false);

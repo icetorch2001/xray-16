@@ -79,7 +79,7 @@ public:
 
 protected:
     VELOCITIES m_movement_params;
-    u32 m_current_travel_point;
+    u64 m_current_travel_point;
 
 private:
     enum EDirectionType

@@ -268,7 +268,7 @@ float evalEnvelope(CEnvelope* env, float time)
         return env->keys[0]->value;
 
     // find the first and last keys
-    int sz = env->keys.size();
+    size_t sz = env->keys.size();
     skey = env->keys[0];
     ekey = env->keys[sz - 1];
     skey_n = env->keys[1];
@@ -319,7 +319,7 @@ float evalEnvelope(CEnvelope* env, float time)
         }
     }
     // get the endpoints of the interval being evaluated
-    int k = 0;
+    size_t k = 0;
     while (time > env->keys[k + 1]->time)
         k++;
     VERIFY((k + 1) < sz);

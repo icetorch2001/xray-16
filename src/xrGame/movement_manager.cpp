@@ -280,7 +280,7 @@ bool CMovementManager::distance_to_destination_greater(const float& distance_to_
         return (true);
 
     float accumulator = 0.f;
-    for (u32 i = detail().curr_travel_point_index(), n = detail().path().size() - 1; i < n; ++i)
+    for (size_t i = detail().curr_travel_point_index(), n = detail().path().size() - 1; i < n; ++i)
     {
         accumulator += detail().path()[i].position.distance_to(detail().path()[i + 1].position);
         if (accumulator >= distance_to_check)
@@ -369,7 +369,7 @@ void CMovementManager::build_level_path()
 }
 
 Fvector CMovementManager::predict_position(
-    const float& time_delta, const Fvector& start_position, u32& current_travel_point, const float& velocity) const
+    const float& time_delta, const Fvector& start_position, size_t & current_travel_point, const float& velocity) const
 {
     typedef xr_vector<DetailPathManager::STravelPathPoint> PATH;
     const PATH& path = detail().path();
@@ -434,7 +434,7 @@ Fvector CMovementManager::predict_position(
 
 Fvector CMovementManager::predict_position(const float& time_delta) const
 {
-    u32 travel_point = detail().m_current_travel_point;
+    size_t travel_point = detail().m_current_travel_point;
     return (predict_position(time_delta, object().Position(), travel_point, prediction_speed()));
 }
 

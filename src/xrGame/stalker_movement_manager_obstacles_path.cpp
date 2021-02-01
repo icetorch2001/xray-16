@@ -29,7 +29,7 @@ bool stalker_movement_manager_obstacles::simulate_path_navigation()
 {
     Fvector current_position = object().Position();
     Fvector previous_position = current_position;
-    u32 current_travel_point = 0;
+    size_t current_travel_point = 0;
     while (!detail().completed(current_position, !detail().state_patrol_path(), current_travel_point))
     {
         m_static_obstacles.on_before_query();

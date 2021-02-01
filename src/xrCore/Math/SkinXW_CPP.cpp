@@ -20,7 +20,7 @@ void Skin1W_CPP(vertRender* D, vertBoned1W* S, u32 vCount, CBoneInstance* Bones)
 {
     //	return;
     // Prepare
-    int U_Count = vCount / 8;
+    size_t U_Count = vCount / 8;
     vertBoned1W* V = S;
     vertBoned1W* E = V + U_Count * 8;
 

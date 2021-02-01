@@ -968,14 +968,14 @@ inline SEE2_CONTEXT* PPM_CONTEXT::makeEscFreq2() const
     u32 t = 2 * NumStats;
     PrefetchData(pb);
     PrefetchData(pb + t);
-    PrefetchData(pb += 2 * t);
+    PrefetchData(pb += 2 * static_cast<size_t>(t));
     PrefetchData(pb + t);
     SEE2_CONTEXT* psee2c;
     if (NumStats != 0xFF)
     {
         t = Suffix->NumStats;
         psee2c = SEE2Cont[QTable[NumStats + 2] - 3] + (SummFreq > 11 * (NumStats + 1));
-        psee2c += 2 * (2 * NumStats < t + NumMasked) + Flags;
+        psee2c += 2 * static_cast<size_t>(2 * NumStats < t + NumMasked) + Flags;
         SubRange.scale = psee2c->getMean();
     }
     else

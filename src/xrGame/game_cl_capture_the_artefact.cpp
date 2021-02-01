@@ -1237,7 +1237,7 @@ void game_cl_CaptureTheArtefact::OnVoteStart(NET_Packet& P)
     if (!m_game_ui)
         return;
 
-    u32 psize = P.B.count + 1;
+    size_t psize = P.B.count + 1;
     char* command = static_cast<char*>(xr_alloca(psize));
     char* player = static_cast<char*>(xr_alloca(psize));
     char* cmd_name = static_cast<char*>(xr_alloca(psize));

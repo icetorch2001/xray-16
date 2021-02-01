@@ -2577,7 +2577,7 @@ bool game_sv_CaptureTheArtefact::Player_Check_Rank(game_PlayerState* ps)
     if (ps->rank == m_aRanks.size() - 1)
         return false;
 
-    int NextExp = m_aRanks[ps->rank + 1].m_iTerms[0];
+    int NextExp = m_aRanks[static_cast<size_t>(ps->rank) + 1].m_iTerms[0];
     if ((ps->experience_Real + ps->experience_New) < NextExp)
         return false;
 

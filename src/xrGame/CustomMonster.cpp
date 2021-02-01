@@ -489,7 +489,7 @@ void CCustomMonster::UpdateCL()
         NET_WasExtrapolating = FALSE;
         // Search 2 keyframes for interpolation
         int select = -1;
-        for (u32 id = 0; id < NET.size() - 1; ++id)
+        for (size_t id = 0; id < NET.size() - 1; ++id)
         {
             if ((NET[id].dwTimeStamp <= dwTime) && (dwTime <= NET[id + 1].dwTimeStamp))
                 select = id;

@@ -1493,7 +1493,7 @@ bool game_sv_ArtefactHunt::Player_Check_Rank(game_PlayerState* ps)
 {
     if (!inherited::Player_Check_Rank(ps))
         return false;
-    if (ps->af_count < m_aRanks[ps->rank + 1].m_iTerms[1])
+    if (ps->af_count < m_aRanks[static_cast<size_t>(ps->rank) + 1].m_iTerms[1])
         return false;
     return true;
 }

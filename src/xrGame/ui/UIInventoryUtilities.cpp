@@ -354,7 +354,7 @@ const shared_str InventoryUtilities::GetDateAsString(ALife::_TIME_ID date, EDate
     return bufDate;
 }
 
-LPCSTR InventoryUtilities::GetTimePeriodAsString(pstr _buff, u32 buff_sz, ALife::_TIME_ID _from, ALife::_TIME_ID _to)
+LPCSTR InventoryUtilities::GetTimePeriodAsString(pstr _buff, size_t buff_sz, ALife::_TIME_ID _from, ALife::_TIME_ID _to)
 {
     u32 year1, month1, day1, hours1, mins1, secs1, milisecs1;
     u32 year2, month2, day2, hours2, mins2, secs2, milisecs2;
@@ -362,7 +362,7 @@ LPCSTR InventoryUtilities::GetTimePeriodAsString(pstr _buff, u32 buff_sz, ALife:
     split_time(_from, year1, month1, day1, hours1, mins1, secs1, milisecs1);
     split_time(_to, year2, month2, day2, hours2, mins2, secs2, milisecs2);
 
-    int cnt = 0;
+    size_t cnt = 0;
     _buff[0] = 0;
 
     if (month1 != month2)
