@@ -13,6 +13,8 @@
 class CBlender_Compile
 {
 public:
+    static constexpr auto InvalidStage = std::numeric_limits<u32>::max();
+
     sh_list L_textures;
     sh_list L_constants;
     sh_list L_matrices;
@@ -53,18 +55,18 @@ private:
 
     string128 pass_vs;
     string128 pass_ps;
-#ifndef USE_DX9
     string128 pass_gs;
-#if defined(USE_DX11) || defined(USE_DX12)
     string128 pass_hs;
     string128 pass_ds;
     string128 pass_cs;
-#endif
-#endif //	USE_DX10
 
-    u32 BC(BOOL v) { return v ? 0x01 : 0; }
+private:
+    inline u32 BC(BOOL v) const { return v ? 1 : 0; }
+    void SetupSampler(u32 stage, pcstr sampler);
 
 public:
+    u32 SampledImage(pcstr sampler, pcstr image, shared_str texture);
+
     CSimulator& R() { return RS; }
     void SetParams(int iPriority, bool bStrictB2F);
     void SetMapping();
@@ -124,7 +126,8 @@ public:
     void i_Filter_Min(u32 s, u32 f);
     void i_Filter_Mip(u32 s, u32 f);
     void i_Filter_Mag(u32 s, u32 f);
-#if defined(USE_DX10) || defined(USE_DX11)
+    void i_Filter_Aniso(u32 s, u32 f);
+#if defined(USE_DX11)
     void i_dx10FilterAnizo(u32 s, BOOL value);
 #endif
     void i_Filter(u32 s, u32 _min, u32 _mip, u32 _mag);
@@ -132,12 +135,6 @@ public:
 
     // R1/R2-compiler	[programmable]		- templates
     void r_Pass(LPCSTR vs, LPCSTR ps, bool bFog, BOOL bZtest = TRUE, BOOL bZwrite = TRUE, BOOL bABlend = FALSE,
-        D3DBLEND abSRC = D3DBLEND_ONE, D3DBLEND abDST = D3DBLEND_ZERO, BOOL aTest = FALSE, u32 aRef = 0)
-    {
-        r_Pass({ vs, nullptr }, ps, bFog, bZtest, bZwrite, bABlend, abSRC, abDST, aTest, aRef);
-    }
-
-    void r_Pass(std::pair<cpcstr, cpcstr> vs, LPCSTR ps, bool bFog, BOOL bZtest = TRUE, BOOL bZwrite = TRUE, BOOL bABlend = FALSE,
         D3DBLEND abSRC = D3DBLEND_ONE, D3DBLEND abDST = D3DBLEND_ZERO, BOOL aTest = FALSE, u32 aRef = 0);
 
     void r_Constant(LPCSTR name, R_constant_setup* s);
@@ -155,16 +152,16 @@ public:
         u32 Fail = D3DSTENCILOP_KEEP, u32 Pass = D3DSTENCILOP_KEEP, u32 ZFail = D3DSTENCILOP_KEEP);
     void r_StencilRef(u32 Ref);
     void r_CullMode(D3DCULL Mode);
-#endif
+#endif // !USE_DX9
 
-#if defined(USE_DX10) || defined(USE_DX11)
+#if defined(USE_DX11)
     void r_dx10Texture(LPCSTR ResourceName, LPCSTR texture, bool recursive = false);
     void r_dx10Texture(LPCSTR ResourceName, shared_str texture, bool recursive = false)
     {
         return r_dx10Texture(ResourceName, texture.c_str(), recursive);
     };
     u32 r_dx10Sampler(LPCSTR ResourceName);
-#endif //	USE_DX10
+#endif // USE_DX11
 
     u32 r_Sampler(LPCSTR name, LPCSTR texture, bool b_ps1x_ProjectiveDivide = false, u32 address = D3DTADDRESS_WRAP,
         u32 fmin = D3DTEXF_LINEAR, u32 fmip = D3DTEXF_LINEAR, u32 fmag = D3DTEXF_LINEAR);

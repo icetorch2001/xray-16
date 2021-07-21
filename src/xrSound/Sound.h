@@ -6,6 +6,16 @@
 #include "xrCore/_vector3d.h"
 #include "xrCommon/xr_vector.h" // DEFINE_VECTOR
 
+#ifdef XRAY_STATIC_BUILD
+#   define XRSOUND_API
+#else
+#   ifdef XRSOUND_EXPORTS
+#      define XRSOUND_API XR_EXPORT
+#   else
+#      define XRSOUND_API XR_IMPORT
+#   endif
+#endif
+
 constexpr pcstr SNDENV_FILENAME = "sEnvironment.xr";
 #define OGG_COMMENT_VERSION 0x0003
 
@@ -233,7 +243,10 @@ public:
     u32 dwBytesTotal;
     float fTimeTotal;
 
-    ref_sound_data() noexcept : handle(0), feedback(0), s_type(st_Effect), g_type(0), g_object(0) {}
+    ref_sound_data() noexcept
+        : handle(0), feedback(0), s_type(st_Effect), g_type(0), g_object(0), dwBytesTotal(0), fTimeTotal(0)
+    {
+    }
 
     ref_sound_data(pcstr fName, esound_type sound_type, int game_type, bool replaceWithNoSound = true)
     {
@@ -252,8 +265,9 @@ The main class representing source/emitter interface
 This class in fact just hides internals and redirect calls to
 specific sub-systems
 */
-struct ref_sound
+class ref_sound
 {
+public:
     ref_sound_data_ptr _p;
 
     ref_sound() = default;

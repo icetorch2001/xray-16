@@ -101,6 +101,7 @@ public:
         size_t size = 0;
         size_t vfs_idx = size_t(-1);
         shared_str path;
+        u32 modif = 0;
 #if defined(XR_PLATFORM_WINDOWS)
         void *hSrcFile = nullptr;
         void *hSrcMap = nullptr;
@@ -181,8 +182,8 @@ public:
 private:
     void check_cached_files(pstr fname, const size_t& fname_size, const file& desc, pcstr& source_name);
 
-    void file_from_cache_impl(IReader*& R, LPSTR fname, const file& desc);
-    void file_from_cache_impl(CStreamReader*& R, LPSTR fname, const file& desc);
+    void file_from_cache_impl(IReader*& R, pstr fname, const file& desc);
+    void file_from_cache_impl(CStreamReader*& R, pstr fname, const file& desc);
     template <typename T>
     void file_from_cache(T*& R, pstr fname, const size_t& fname_size, const file& desc, pcstr& source_name);
 

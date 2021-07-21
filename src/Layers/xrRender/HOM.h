@@ -17,6 +17,7 @@ private:
     struct HOMStatistics
     {
         CStatTimer Total;
+        Lock TotalTimerLock;
         u32 FrustumTriangleCount;
         u32 VisibleTriangleCount;
 
@@ -38,9 +39,7 @@ private:
     Fmatrix m_xform;
     Fmatrix m_xform_01;
 
-    Lock MT;
-    volatile u32 MT_frame_rendered;
-    HOMStatistics stats;
+    mutable HOMStatistics stats;
 
     void Render_DB(CFrustum& base);
 
@@ -55,23 +54,12 @@ public:
     void Disable();
     void Enable();
 
-    bool MT_Synced() const
-    {
-        return IGame_Persistent::MainMenuActiveOrLevelNotExist();
-    }
+    void xr_stdcall MT_RENDER(Task& /*thisTask*/, void* /*data*/);
 
-    void __stdcall MT_RENDER();
-    ICF void MT_Sync()
-    {
-        if (MT_Synced())
-            return;
-        MT_RENDER();
-    }
-
-    BOOL visible(vis_data& vis);
-    BOOL visible(Fbox3& B);
-    BOOL visible(sPoly& P);
-    BOOL visible(Fbox2& B, float depth); // viewport-space (0..1)
+    BOOL visible(vis_data& vis) const;
+    BOOL visible(const Fbox3& B) const;
+    BOOL visible(const sPoly& P) const;
+    BOOL visible(const Fbox2& B, float depth) const; // viewport-space (0..1)
 
     CHOM();
     ~CHOM();

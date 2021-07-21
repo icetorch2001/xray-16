@@ -4,8 +4,8 @@
 void dxStatGraphRender::Copy(IStatGraphRender& _in) { *this = *((dxStatGraphRender*)&_in); }
 void dxStatGraphRender::OnDeviceCreate()
 {
-    hGeomLine.create(FVF::F_TL0uv, RCache.Vertex.Buffer(), RCache.Index.Buffer());
-    hGeomTri.create(FVF::F_TL0uv, RCache.Vertex.Buffer(), RCache.QuadIB);
+    hGeomLine.create(FVF::F_L, RCache.Vertex.Buffer(), RCache.Index.Buffer());
+    hGeomTri.create(FVF::F_L, RCache.Vertex.Buffer(), RCache.QuadIB);
 }
 
 void dxStatGraphRender::OnDeviceDestroy()
@@ -16,7 +16,23 @@ void dxStatGraphRender::OnDeviceDestroy()
 
 void dxStatGraphRender::OnRender(CStatGraph& owner)
 {
+    PIX_EVENT(StatGraph);
+
+    Fmatrix ViewM;
+    ViewM.identity();
+    ViewM._11 =  1.f / Device.dwWidth;
+    ViewM._22 = -1.f / Device.dwHeight;
+
+    RCache.set_xform_world(Fidentity);
+    RCache.set_xform_view(ViewM);
+    RCache.set_xform_project(Fidentity);
+#ifdef USE_DX9
     RCache.OnFrameEnd();
+#else
+    RCache.set_Shader(RImplementation.m_WireShader);
+    RCache.set_Z(false);
+    RCache.set_c("tfactor", 1.0f, 1.0f, 1.0f, 1.0f);
+#endif
 
     RenderBack(owner);
 
@@ -44,14 +60,14 @@ void dxStatGraphRender::OnRender(CStatGraph& owner)
     };
 
     u32 dwOffsetTri = 0, dwOffsetLine = 0, dwCount;
-    FVF::TL0uv* pv_Tri_start = nullptr;
-    FVF::TL0uv* pv_Tri;
-    FVF::TL0uv* pv_Line_start = nullptr;
-    FVF::TL0uv* pv_Line;
+    FVF::L* pv_Tri_start = nullptr;
+    FVF::L* pv_Tri;
+    FVF::L* pv_Line_start = nullptr;
+    FVF::L* pv_Line;
 
     if (TriElem)
     {
-        pv_Tri_start = (FVF::TL0uv*)RCache.Vertex.Lock(TriElem, hGeomTri->vb_stride, dwOffsetTri);
+        pv_Tri_start = (FVF::L*)RCache.Vertex.Lock(TriElem, hGeomTri->vb_stride, dwOffsetTri);
         pv_Tri = pv_Tri_start;
 
         pv_Tri = pv_Tri_start;
@@ -59,7 +75,7 @@ void dxStatGraphRender::OnRender(CStatGraph& owner)
         {
             switch (it->style)
             {
-            case CStatGraph::stBar: RenderBars(owner, &pv_Tri, &(it->elements)); break;
+            case CStatGraph::stBar: RenderBars(owner, &pv_Tri, it->elements); break;
             };
         };
         dwCount = u32(pv_Tri - pv_Tri_start);
@@ -70,15 +86,15 @@ void dxStatGraphRender::OnRender(CStatGraph& owner)
 
     if (LineElem)
     {
-        pv_Line_start = (FVF::TL0uv*)RCache.Vertex.Lock(LineElem, hGeomLine->vb_stride, dwOffsetLine);
+        pv_Line_start = (FVF::L*)RCache.Vertex.Lock(LineElem, hGeomLine->vb_stride, dwOffsetLine);
         pv_Line = pv_Line_start;
 
         for (auto it = owner.subgraphs.begin(); it != owner.subgraphs.end(); ++it)
         {
             switch (it->style)
             {
-            case CStatGraph::stCurve: RenderLines(owner, &pv_Line, &(it->elements)); break;
-            case CStatGraph::stBarLine: RenderBarLines(owner, &pv_Line, &(it->elements)); break;
+            case CStatGraph::stCurve: RenderLines(owner, &pv_Line, it->elements); break;
+            case CStatGraph::stBarLine: RenderBarLines(owner, &pv_Line, it->elements); break;
             };
         };
 
@@ -93,10 +109,10 @@ void dxStatGraphRender::OnRender(CStatGraph& owner)
         dwOffsetLine = 0;
         LineElem = owner.m_Markers.size() * 2;
 
-        pv_Line_start = (FVF::TL0uv*)RCache.Vertex.Lock(LineElem, hGeomLine->vb_stride, dwOffsetLine);
+        pv_Line_start = (FVF::L*)RCache.Vertex.Lock(LineElem, hGeomLine->vb_stride, dwOffsetLine);
         pv_Line = pv_Line_start;
 
-        RenderMarkers(owner, &pv_Line, &(owner.m_Markers));
+        RenderMarkers(owner, &pv_Line, owner.m_Markers);
 
         dwCount = u32(pv_Line - pv_Line_start);
         RCache.Vertex.Unlock(dwCount, hGeomLine->vb_stride);
@@ -109,8 +125,8 @@ void dxStatGraphRender::RenderBack(CStatGraph& owner)
 {
     // draw back
     u32 dwOffset, dwCount;
-    FVF::TL0uv* pv_start = (FVF::TL0uv*)RCache.Vertex.Lock(4, hGeomTri->vb_stride, dwOffset);
-    FVF::TL0uv* pv = pv_start;
+    FVF::L* pv_start = (FVF::L*)RCache.Vertex.Lock(4, hGeomTri->vb_stride, dwOffset);
+    FVF::L* pv = pv_start;
     // base rect
     pv->set(owner.lt.x, owner.rb.y, owner.back_color);
     pv++; // 0
@@ -127,7 +143,7 @@ void dxStatGraphRender::RenderBack(CStatGraph& owner)
     RCache.Render(D3DPT_TRIANGLELIST, dwOffset, 0, dwCount, 0, dwCount / 2);
 
     // draw rect
-    pv_start = (FVF::TL0uv*)RCache.Vertex.Lock(5, hGeomLine->vb_stride, dwOffset);
+    pv_start = (FVF::L*)RCache.Vertex.Lock(5, hGeomLine->vb_stride, dwOffset);
     pv = pv_start;
     // base rect
     pv->set(owner.lt.x, owner.lt.y, owner.rect_color);
@@ -155,37 +171,37 @@ void dxStatGraphRender::RenderBack(CStatGraph& owner)
     int Num_H_LinesUp = (owner.grid.y < PNum_H_LinesUp) ? owner.grid.y : PNum_H_LinesUp;
     int Num_H_LinesDwn = (owner.grid.y < PNum_H_LinesUp) ? owner.grid.y : PNum_H_LinesDwn;
 
-    pv_start = (FVF::TL0uv*)RCache.Vertex.Lock(
+    pv_start = (FVF::L*)RCache.Vertex.Lock(
         2 + 2 * owner.grid.x + Num_H_LinesUp * 2 + Num_H_LinesDwn * 2, hGeomLine->vb_stride, dwOffset);
     pv = pv_start;
     // base Coordinate Line
-    pv->set(owner.lt.x, int(base_y), owner.base_color);
+    pv->set(owner.lt.x, base_y, owner.base_color);
     pv++; // 0
-    pv->set(owner.rb.x, int(base_y), owner.base_color);
+    pv->set(owner.rb.x, base_y, owner.base_color);
     pv++; // 0
     // owner.grid
     //    float grid_offs_x     = float(owner.rb.x-owner.lt.x)/float(owner.grid.x+1);
     //    float grid_offs_y     = float(owner.rb.y-owner.lt.y)/float(owner.grid.y+1);
     for (int g_x = 1; g_x <= owner.grid.x; g_x++)
     {
-        pv->set(int(owner.lt.x + g_x * owner.grid_step.x * elem_factor), owner.lt.y, owner.grid_color);
+        pv->set(owner.lt.x + g_x * owner.grid_step.x * elem_factor, owner.lt.y, owner.grid_color);
         pv++;
-        pv->set(int(owner.lt.x + g_x * owner.grid_step.x * elem_factor), owner.rb.y, owner.grid_color);
+        pv->set(owner.lt.x + g_x * owner.grid_step.x * elem_factor, owner.rb.y, owner.grid_color);
         pv++;
     }
     for (int g_y = 1; g_y <= Num_H_LinesDwn; g_y++)
     {
-        pv->set(owner.lt.x, int(base_y + g_y * owner.grid_step.y * elem_factor), owner.grid_color);
+        pv->set(owner.lt.x, base_y + g_y * owner.grid_step.y * elem_factor, owner.grid_color);
         pv++;
-        pv->set(owner.rb.x, int(base_y + g_y * owner.grid_step.y * elem_factor), owner.grid_color);
+        pv->set(owner.rb.x, base_y + g_y * owner.grid_step.y * elem_factor, owner.grid_color);
         pv++;
     };
 
     for (int g_y = 1; g_y <= Num_H_LinesUp; g_y++)
     {
-        pv->set(owner.lt.x, int(base_y - g_y * owner.grid_step.y * elem_factor), owner.grid_color);
+        pv->set(owner.lt.x, base_y - g_y * owner.grid_step.y * elem_factor, owner.grid_color);
         pv++;
-        pv->set(owner.rb.x, int(base_y - g_y * owner.grid_step.y * elem_factor), owner.grid_color);
+        pv->set(owner.rb.x, base_y - g_y * owner.grid_step.y * elem_factor, owner.grid_color);
         pv++;
     }
 
@@ -203,7 +219,7 @@ void dxStatGraphRender::RenderBack(CStatGraph& owner)
     RCache.Render(D3DPT_LINELIST, dwOffset, dwCount / 2);
 }
 
-void dxStatGraphRender::RenderBars(CStatGraph& owner, FVF::TL0uv** ppv, CStatGraph::ElementsDeq* pelements)
+void dxStatGraphRender::RenderBars(CStatGraph& owner, FVF::L** ppv, CStatGraph::ElementsDeq& pelements)
 {
     float elem_offs = float(owner.rb.x - owner.lt.x) / owner.max_item_count;
     float elem_factor = float(owner.rb.y - owner.lt.y) / float(owner.mx - owner.mn);
@@ -212,9 +228,9 @@ void dxStatGraphRender::RenderBars(CStatGraph& owner, FVF::TL0uv** ppv, CStatGra
     float column_width = elem_offs;
     if (column_width > 1)
         column_width--;
-    for (auto it = pelements->begin(); it != pelements->end(); ++it)
+    for (auto it = pelements.begin(); it != pelements.end(); ++it)
     {
-        float X = float(it - pelements->begin()) * elem_offs + owner.lt.x;
+        float X = float(it - pelements.begin()) * elem_offs + owner.lt.x;
         float Y0 = base_y;
         float Y1 = base_y - it->data * elem_factor;
 
@@ -243,42 +259,46 @@ void dxStatGraphRender::RenderBars(CStatGraph& owner, FVF::TL0uv** ppv, CStatGra
     };
 }
 
-void dxStatGraphRender::RenderLines(CStatGraph& owner, FVF::TL0uv** ppv, CStatGraph::ElementsDeq* pelements) const
+void dxStatGraphRender::RenderLines(CStatGraph& owner, FVF::L** ppv, CStatGraph::ElementsDeq& pelements) const
 {
+    if (pelements.size() <= 1)
+        return;
+
     float elem_offs = float(owner.rb.x - owner.lt.x) / owner.max_item_count;
     float elem_factor = float(owner.rb.y - owner.lt.y) / float(owner.mx - owner.mn);
     float base_y = float(owner.rb.y) + (owner.mn * elem_factor);
 
-    for (auto it = pelements->begin() + 1; it != pelements->end() && it != pelements->end() + 1;
-         ++it)
+    for (auto it = pelements.begin() + 1; it != pelements.end(); ++it)
     {
         auto it_prev = it - 1;
-        float X0 = float(it_prev - pelements->begin()) * elem_offs + owner.lt.x;
+        float X0 = float(it_prev - pelements.begin()) * elem_offs + owner.lt.x;
         float Y0 = base_y - it_prev->data * elem_factor;
         (*ppv)->set(X0, Y0, it->color);
         (*ppv)++;
-        float X1 = float(it - pelements->begin()) * elem_offs + owner.lt.x;
+        float X1 = float(it - pelements.begin()) * elem_offs + owner.lt.x;
         float Y1 = base_y - it->data * elem_factor;
         (*ppv)->set(X1, Y1, it->color);
         (*ppv)++;
     }
 };
 
-void dxStatGraphRender::RenderBarLines(CStatGraph& owner, FVF::TL0uv** ppv, CStatGraph::ElementsDeq* pelements) const
+void dxStatGraphRender::RenderBarLines(CStatGraph& owner, FVF::L** ppv, CStatGraph::ElementsDeq& pelements) const
 {
+    if (pelements.size() <= 1)
+        return;
+
     float elem_offs = float(owner.rb.x - owner.lt.x) / owner.max_item_count;
     float elem_factor = float(owner.rb.y - owner.lt.y) / float(owner.mx - owner.mn);
     float base_y = float(owner.rb.y) + (owner.mn * elem_factor);
 
-    for (auto it = pelements->begin() + 1; it != pelements->end() && it != pelements->end() + 1;
-         ++it)
+    for (auto it = pelements.begin() + 1; it != pelements.end(); ++it)
     {
         auto it_prev = it - 1;
-        float X0 = float(it_prev - pelements->begin()) * elem_offs + owner.lt.x + elem_offs;
+        float X0 = float(it_prev - pelements.begin()) * elem_offs + owner.lt.x + elem_offs;
         float Y0 = base_y - it_prev->data * elem_factor;
         (*ppv)->set(X0, Y0, it->color);
         (*ppv)++;
-        float X1 = float(it - pelements->begin()) * elem_offs + owner.lt.x;
+        float X1 = float(it - pelements.begin()) * elem_offs + owner.lt.x;
         float Y1 = base_y - it->data * elem_factor;
         (*ppv)->set(X1, Y1, it->color);
         (*ppv)++;
@@ -290,15 +310,14 @@ void dxStatGraphRender::RenderBarLines(CStatGraph& owner, FVF::TL0uv** ppv, CSta
     }
 };
 
-void dxStatGraphRender::RenderMarkers(CStatGraph& owner, FVF::TL0uv** ppv, CStatGraph::MarkersDeq* pmarkers)
+void dxStatGraphRender::RenderMarkers(CStatGraph& owner, FVF::L** ppv, CStatGraph::MarkersDeq& pmarkers)
 {
     float elem_offs = float(owner.rb.x - owner.lt.x) / owner.max_item_count;
     float elem_factor = float(owner.rb.y - owner.lt.y) / float(owner.mx - owner.mn);
     float base_y = float(owner.rb.y) + (owner.mn * elem_factor);
 
-    for (auto it = pmarkers->begin(); it != pmarkers->end() && it != pmarkers->end() + 1; ++it)
+	for (CStatGraph::SMarker& CurMarker : pmarkers)
     {
-        CStatGraph::SMarker& CurMarker = *it;
         float X0 = 0, Y0 = 0, X1 = 0, Y1 = 0;
         switch (CurMarker.m_eStyle)
         {

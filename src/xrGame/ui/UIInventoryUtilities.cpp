@@ -354,7 +354,7 @@ const shared_str InventoryUtilities::GetDateAsString(ALife::_TIME_ID date, EDate
     return bufDate;
 }
 
-LPCSTR InventoryUtilities::GetTimePeriodAsString(LPSTR _buff, u32 buff_sz, ALife::_TIME_ID _from, ALife::_TIME_ID _to)
+LPCSTR InventoryUtilities::GetTimePeriodAsString(pstr _buff, u32 buff_sz, ALife::_TIME_ID _from, ALife::_TIME_ID _to)
 {
     u32 year1, month1, day1, hours1, mins1, secs1, milisecs1;
     u32 year2, month2, day2, hours2, mins2, secs2, milisecs2;
@@ -403,7 +403,7 @@ void InventoryUtilities::UpdateWeight(CUIStatic& wnd, CInventoryOwner* pInvOwner
     string32 prefix;
 
     if (withPrefix)
-        xr_sprintf(prefix, "%%c[default]%s ", StringTable().translate("ui_inv_weight"));
+        xr_sprintf(prefix, "%%c[default]%s ", StringTable().translate("ui_inv_weight").c_str());
     else
         xr_strcpy(prefix, "");
 

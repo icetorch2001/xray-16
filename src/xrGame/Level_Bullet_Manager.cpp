@@ -15,7 +15,6 @@
 
 #include "Include/xrRender/UIRender.h"
 #include "Include/xrRender/Kinematics.h"
-#include "xrEngine/TaskScheduler.hpp"
 
 #ifdef DEBUG
 #include "debug_renderer.h"
@@ -629,7 +628,7 @@ bool CBulletManager::trajectory_check_error(Fvector& previous_position, collide:
     bullet.dir = start_to_target;
 
     collide::ray_defs RD(start, start_to_target, distance, CDB::OPT_FULL_TEST, collide::rqtBoth);
-    BOOL const result = Level().ObjectSpace.RayQuery(
+    bool const result = Level().ObjectSpace.RayQuery(
         storage, RD, CBulletManager::firetrace_callback, &data, CBulletManager::test_callback, NULL);
     if (!result || (data.collide_time == 0.f))
     {
@@ -907,18 +906,8 @@ void CBulletManager::CommitRenderSet() // @ the end of frame
     m_BulletsRendered = m_Bullets;
     if (g_mt_config.test(mtBullets))
     {
-        if (true)
-        {
-            Device.seqParallel.push_back(
-                fastdelegate::FastDelegate0<>(this, &CBulletManager::UpdateWorkload));
-
-        }
-        else
-        {
-            TaskScheduler->AddTask("CBulletManager::UpdateWorkload",
-                { this, &CBulletManager::UpdateWorkload },
-                { &Device, &CRenderDevice::IsMTProcessingAllowed });
-        }
+        Device.seqParallel.push_back(
+            fastdelegate::FastDelegate0<>(this, &CBulletManager::UpdateWorkload));
     }
     else
     {

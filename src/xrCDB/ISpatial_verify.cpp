@@ -10,10 +10,8 @@ public:
     u32 n_count;
 
 public:
-    walker()
+    walker() : o_count(0), n_count(0)
     {
-        o_count = 0;
-        n_count = 0;
     }
     void walk(ISpatial_NODE* N, Fvector& n_C, float n_R)
     {
@@ -34,11 +32,11 @@ public:
     }
 };
 
-BOOL ISpatial_DB::verify()
+bool ISpatial_DB::verify()
 {
     walker W;
     W.walk(m_root, m_center, m_bounds);
-    BOOL bResult = (W.o_count == Stats.ObjectCount) && (W.n_count == Stats.NodeCount);
+    bool bResult = (W.o_count == Stats.ObjectCount) && (W.n_count == Stats.NodeCount);
     VERIFY(bResult);
     return bResult;
 }

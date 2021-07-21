@@ -200,6 +200,7 @@ u32 D3DXRenderBase::GetCacheStatPolys()
 }
 void D3DXRenderBase::Begin()
 {
+    HW.BeginScene();
     RCache.OnFrameBegin();
     RCache.set_CullMode(CULL_CW);
     RCache.set_CullMode(CULL_CCW);
@@ -209,28 +210,22 @@ void D3DXRenderBase::Begin()
 
 void D3DXRenderBase::Clear()
 {
-#ifndef USE_DX9
-    HW.pContext->ClearDepthStencilView(RCache.get_ZB(), D3D_CLEAR_DEPTH | D3D_CLEAR_STENCIL, 1.0f, 0);
+    RCache.ClearZB(RCache.get_ZB(), 1.0f, 0);
     if (psDeviceFlags.test(rsClearBB))
     {
-        FLOAT ColorRGBA[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-        HW.pContext->ClearRenderTargetView(RCache.get_RT(), ColorRGBA);
+        RCache.ClearRT(RCache.get_RT(), {}); // black
     }
-#else
-    CHK_DX(HW.pDevice->Clear(0, nullptr, D3DCLEAR_ZBUFFER | (psDeviceFlags.test(rsClearBB) ? D3DCLEAR_TARGET : 0) |
-        (HW.Caps.bStencil ? D3DCLEAR_STENCIL : 0), color_xrgb(0, 0, 0), 1, 0));
-#endif
 }
 
 void DoAsyncScreenshot();
 
 void D3DXRenderBase::End()
 {
-    VERIFY(HW.pDevice);
     if (HW.Caps.SceneMode)
         overdrawEnd();
     RCache.OnFrameEnd();
     DoAsyncScreenshot();
+    HW.EndScene();
     HW.Present();
 }
 
@@ -240,12 +235,7 @@ void D3DXRenderBase::ResourcesDestroyNecessaryTextures()
 }
 void D3DXRenderBase::ClearTarget()
 {
-#ifndef USE_DX9
-    FLOAT ColorRGBA[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    HW.pContext->ClearRenderTargetView(RCache.get_RT(), ColorRGBA);
-#else
-    CHK_DX(HW.pDevice->Clear(0, nullptr, D3DCLEAR_TARGET, color_xrgb(0, 0, 0), 1, 0));
-#endif
+    RCache.ClearRT(RCache.get_RT(), {}); // black
 }
 
 void D3DXRenderBase::SetCacheXform(Fmatrix& mView, Fmatrix& mProject)

@@ -6,6 +6,7 @@
 #include "xrCore/_flags.h"
 #include "xrCore/xrstring.h"
 #include "xrCommon/xr_vector.h"
+#include "xrEngine/StatGraph.h"
 
 class ENGINE_API CGameFont;
 
@@ -16,6 +17,7 @@ class ENGINE_API CStats : public pureRender
 private:
     CGameFont* statsFont;
     CGameFont* fpsFont;
+    xr_unique_ptr<CStatGraph> fpsGraph;
     float fMem_calls;
     xr_vector<shared_str> errors;
 
@@ -41,5 +43,10 @@ enum
     st_sound_info_name = (1 << 4),
     st_sound_info_object = (1 << 5),
 };
+
+extern ENGINE_API CStatTimer gTestTimer0; // debug counter
+extern ENGINE_API CStatTimer gTestTimer1; // debug counter
+extern ENGINE_API CStatTimer gTestTimer2; // debug counter
+extern ENGINE_API CStatTimer gTestTimer3; // debug counter
 
 extern Flags32 g_stats_flags;

@@ -31,8 +31,6 @@
 #pragma comment(lib, "shell32.lib")
 #endif
 
-#include <tbb/parallel_for_each.h>
-
 #include "Common/object_broker.h"
 
 #include "account_manager.h"
@@ -722,7 +720,7 @@ void CMainMenu::OnSessionTerminate(LPCSTR reason)
 
     m_start_time = Device.dwTimeGlobal;
     LPCSTR str = StringTable().translate("ui_st_kicked_by_server").c_str();
-    LPSTR text;
+    pstr text;
 
     if (reason && xr_strlen(reason) && reason[0] == '@')
     {

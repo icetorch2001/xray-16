@@ -66,11 +66,11 @@ void xrServer::LoadServerInfo()
     {
         return;
     }
-    m_server_logo = FS.r_open("$app_data_root$", SERVER_LOGO_FN);
+    m_server_logo = FS.r_open("$app_data_root$", SERVER_LOGO_FN); // XXX: check that the file is actually jpg
     if (!m_server_logo)
     {
         Msg("! ERROR: failed to open server logo file %s", SERVER_LOGO_FN);
-        return;
+        return; // XXX: allow submitting server rules without logo
     }
     m_server_rules = FS.r_open("$app_data_root$", SERVER_RULES_FN);
     if (!m_server_rules)
@@ -114,9 +114,9 @@ void server_info_uploader::start_upload_info(IReader const* svlogo, IReader cons
 
     buffer_vector<mutable_buffer_t> tmp_bufvec(xr_alloca(sizeof(mutable_buffer_t) * 2), 2);
 
-    tmp_bufvec.push_back(std::make_pair(static_cast<u8*>(svlogo->pointer()), svlogo->length()));
+    tmp_bufvec.push_back(std::make_pair(static_cast<u8*>(svlogo->pointer()), static_cast<u32>(svlogo->length())));
 
-    tmp_bufvec.push_back(std::make_pair(static_cast<u8*>(svrules->pointer()), svrules->length()));
+    tmp_bufvec.push_back(std::make_pair(static_cast<u8*>(svrules->pointer()), static_cast<u32>(svrules->length())));
 
     m_to_client = toclient;
 

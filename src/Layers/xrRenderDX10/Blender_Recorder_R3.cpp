@@ -6,7 +6,7 @@
 #include "Layers/xrRender/Blender.h"
 #include "Layers/xrRender/tss.h"
 
-void fix_texture_name(LPSTR fn);
+void fix_texture_name(pstr fn);
 
 void CBlender_Compile::r_Stencil(BOOL Enable, u32 Func, u32 Mask, u32 WriteMask, u32 Fail, u32 Pass, u32 ZFail)
 {
@@ -149,7 +149,7 @@ void CBlender_Compile::r_Pass(LPCSTR _vs, LPCSTR _gs, LPCSTR _ps, bool bFog, BOO
     u32 flags = 0;
     if (ps->constants.dx9compatibility)
         flags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
-    SVS* vs = RImplementation.Resources->_CreateVS(_vs, nullptr, flags);
+    SVS* vs = RImplementation.Resources->_CreateVS(_vs, flags);
     SGS* gs = RImplementation.Resources->_CreateGS(_gs);
     dest.ps = ps;
     dest.vs = vs;

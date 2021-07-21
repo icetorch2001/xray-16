@@ -181,6 +181,15 @@ class shader_options_holder
     D3D_SHADER_MACRO m_options[128];
 
 public:
+    void add(const xr_vector<D3D_SHADER_MACRO>& macros)
+    {
+        for (auto macro : macros)
+        {
+            m_options[pos] = std::move(macro);
+            ++pos;
+        }
+    }
+
     void add(cpcstr name, cpcstr value)
     {
         m_options[pos] = { name, value };
@@ -210,6 +219,8 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
     string32 c_sun_shafts;
     string32 c_ssao;
     string32 c_sun_quality;
+    char c_msaa_samples[2];
+    char c_msaa_current_sample[2];
 
     // options:
     const auto appendShaderOption = [&](u32 option, cpcstr macro, cpcstr value)
@@ -219,6 +230,9 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
 
         sh_name.append(option);
     };
+
+    // External defines
+    options.add(m_ShaderOptions);
 
     // Shadow map size
     {
@@ -301,29 +315,6 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
 
             options.add("USE_HBAO", "1");
         }
-    }
-
-    if (o.dx10_msaa)
-    {
-        static string256 def;
-        // if( m_MSAASample < 0 )
-        //{
-        def[0] = '0';
-        //	sh_name[len]='0'; ++len;
-        //}
-        // else
-        //{
-        //	def[0]= '0' + char(m_MSAASample);
-        //	sh_name[len]='0' + char(m_MSAASample); ++len;
-        //}
-        def[1] = 0;
-
-        options.add("ISAMPLE", def);
-        sh_name.append(static_cast<u32>(0));
-    }
-    else
-    {
-        sh_name.append(static_cast<u32>(0));
     }
 
     // skinning
@@ -427,11 +418,22 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
     {
         appendShaderOption(o.dx10_msaa, "USE_MSAA", "1");
 
+        // Number of samples
         {
-            static char samples[2];
-            samples[0] = char(o.dx10_msaa_samples) + '0';
-            samples[1] = 0;
-            appendShaderOption(o.dx10_msaa_samples, "MSAA_SAMPLES", samples);
+            c_msaa_samples[0] = char(o.dx10_msaa_samples) + '0';
+            c_msaa_samples[1] = 0;
+            appendShaderOption(o.dx10_msaa_samples, "MSAA_SAMPLES", c_msaa_samples);
+        }
+        // Current sample
+        {
+            if (m_MSAASample < 0 || o.dx10_msaa_opt)
+                c_msaa_current_sample[0] = '0';
+            else
+                c_msaa_current_sample[0] = '0' + char(m_MSAASample);
+            c_msaa_current_sample[1] = 0;
+
+            appendShaderOption(m_MSAASample >= 0 ? m_MSAASample : 0,
+                "ISAMPLE", c_msaa_current_sample);
         }
 
         appendShaderOption(o.dx10_msaa_opt, "MSAA_OPTIMIZATION", "1");
@@ -484,11 +486,22 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
     char extension[3];
     strncpy_s(extension, pTarget, 2);
 
+    pcstr renderer;
+    if (HW.FeatureLevel >= D3D_FEATURE_LEVEL_11_0)
+        renderer = "r4" DELIMITER;
+    else if (HW.FeatureLevel >= D3D_FEATURE_LEVEL_10_0)
+        renderer = "r3" DELIMITER;
+    else
+    {
+        renderer = "r4_level9" DELIMITER;
+        R_ASSERT(!"Feature levels lower than 10.0 are unsupported");
+    }
+
     string_path filename;
-    strconcat(sizeof(filename), filename, "r4" DELIMITER, name, ".", extension);
+    strconcat(sizeof(filename), filename, renderer, name, ".", extension);
 
     string_path folder_name, folder;
-    strconcat(sizeof(folder), folder, "r4" DELIMITER "objects" DELIMITER, filename);
+    strconcat(sizeof(folder), folder, renderer, "objects" DELIMITER, filename);
 
     FS.update_path(folder_name, "$game_shaders$", folder);
     xr_strcat(folder_name, DELIMITER);
@@ -522,6 +535,8 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         IReader* file = FS.r_open(file_name);
         if (file->length() > 4)
         {
+            const bool dx9compatibility = file->r_u32();
+
             u32 savedFileCrc = file->r_u32();
             if (savedFileCrc == fileCrc)
             {
@@ -529,8 +544,9 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
                 u32 bytecodeCrc = crc32(file->pointer(), file->elapsed());
                 if (bytecodeCrc == savedBytecodeCrc)
                 {
-                    const bool dx9compatibility = file->r_u32();
-
+#ifdef DEBUG
+                    Log("* Loading shader:", file_name);
+#endif
                     _result =
                         create_shader(pTarget, (DWORD*)file->pointer(), file->elapsed(),
                             filename, result, o.disasm, dx9compatibility);
@@ -545,7 +561,7 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
         includer Includer;
         LPD3DBLOB pShaderBuf = NULL;
         LPD3DBLOB pErrorBuf = NULL;
-        _result = D3DCompile(fs->pointer(), fs->length(), "", options.data(),
+        _result = HW.D3DCompile(fs->pointer(), fs->length(), "", options.data(),
             &Includer, pFunctionName, pTarget, Flags, 0, &pShaderBuf, &pErrorBuf);
 
         if (FAILED(_result) && pErrorBuf)
@@ -555,7 +571,7 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
             {
                 pErrorBuf = nullptr;
                 Flags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
-                _result = D3DCompile(fs->pointer(), fs->length(), "", options.data(),
+                _result = HW.D3DCompile(fs->pointer(), fs->length(), "", options.data(),
                     &Includer, pFunctionName, pTarget, Flags, 0, &pShaderBuf, &pErrorBuf);
             }
         }
@@ -565,16 +581,17 @@ HRESULT CRender::shader_compile(pcstr name, IReader* fs, pcstr pFunctionName,
             const bool dx9compatibility = Flags & D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
             IWriter* file = FS.w_open(file_name);
 
+            file->w_u32(dx9compatibility);
             file->w_u32(fileCrc);
 
             u32 bytecodeCrc = crc32(pShaderBuf->GetBufferPointer(), pShaderBuf->GetBufferSize());
-            file->w_u32(bytecodeCrc);
-
-            file->w_u32(dx9compatibility);
+            file->w_u32(bytecodeCrc); // Do not write anything below this line, take a look at reading (crc32)
 
             file->w(pShaderBuf->GetBufferPointer(), pShaderBuf->GetBufferSize());
             FS.w_close(file);
-
+#ifdef DEBUG
+            Log("- Compile shader:", file_name);
+#endif
             _result = create_shader(pTarget, (DWORD*)pShaderBuf->GetBufferPointer(), pShaderBuf->GetBufferSize(),
                 filename, result, o.disasm, dx9compatibility);
         }

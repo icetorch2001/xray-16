@@ -1,9 +1,6 @@
 #include "stdafx.h"
 
 #include "dx10HW.h"
-#include "xrEngine/xr_input.h"
-#include "xrEngine/XR_IOConsole.h"
-#include "xrCore/xr_token.h"
 
 #include "StateManager/dx10SamplerStateCache.h"
 #include "StateManager/dx10StateCache.h"
@@ -28,7 +25,7 @@ void CHW::OnAppActivate()
     if (m_pSwapChain && !m_ChainDesc.Windowed)
     {
         ShowWindow(m_ChainDesc.OutputWindow, SW_RESTORE);
-        m_pSwapChain->SetFullscreenState(psDeviceFlags.is(rsFullscreen), NULL);
+        m_pSwapChain->SetFullscreenState(ThisInstanceIsGlobal() ? psDeviceFlags.is(rsFullscreen) : false, NULL);
     }
 }
 
@@ -46,8 +43,18 @@ void CHW::OnAppDeactivate()
 //////////////////////////////////////////////////////////////////////
 void CHW::CreateD3D()
 {
+    hDXGI = XRay::LoadModule("dxgi");
+    hD3D = XRay::LoadModule("d3d11");
+    if (!hD3D->IsLoaded() || !hDXGI->IsLoaded())
+    {
+        Valid = false;
+        return;
+    }
+
     // Минимально поддерживаемая версия Windows => Windows Vista SP2 или Windows 7.
-    R_CHK(CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)(&m_pFactory)));
+    const auto createDXGIFactory = static_cast<decltype(&CreateDXGIFactory1)>(hDXGI->GetProcAddress("CreateDXGIFactory1"));
+    R_CHK(createDXGIFactory(__uuidof(IDXGIFactory1), (void**)(&m_pFactory)));
+
     R_CHK(m_pFactory->EnumAdapters1(0, &m_pAdapter));
 }
 
@@ -56,11 +63,6 @@ void CHW::DestroyD3D()
     _SHOW_REF("refCount:m_pAdapter", m_pAdapter);
     _RELEASE(m_pAdapter);
 
-#ifdef HAS_DX11_2
-    _SHOW_REF("refCount:m_pFactory2", m_pFactory2);
-    _RELEASE(m_pFactory2);
-#endif
-
     _SHOW_REF("refCount:m_pFactory", m_pFactory);
     _RELEASE(m_pFactory);
 }
@@ -68,6 +70,8 @@ void CHW::DestroyD3D()
 void CHW::CreateDevice(SDL_Window* sdlWnd)
 {
     CreateD3D();
+    if (!Valid)
+        return;
 
     m_DriverType = Caps.bForceGPU_REF ? D3D_DRIVER_TYPE_REFERENCE : D3D_DRIVER_TYPE_HARDWARE;
 
@@ -80,7 +84,7 @@ void CHW::CreateDevice(SDL_Window* sdlWnd)
     Caps.id_vendor = Desc.VendorId;
     Caps.id_device = Desc.DeviceId;
 
-    UINT createDeviceFlags = 0;
+    u32 createDeviceFlags = 0;
 
 #ifdef DEBUG
     if (xrDebug::DebuggerIsPresent())
@@ -89,7 +93,6 @@ void CHW::CreateDevice(SDL_Window* sdlWnd)
 
     HRESULT R;
 
-#ifdef USE_DX11
     D3D_FEATURE_LEVEL featureLevels[] =
     {
 #ifdef HAS_DX11_3
@@ -109,26 +112,53 @@ void CHW::CreateDevice(SDL_Window* sdlWnd)
         D3D_FEATURE_LEVEL_10_0
     };
 
+    D3D_FEATURE_LEVEL featureLevels3[] =
+    {
+        D3D_FEATURE_LEVEL_10_1,
+        D3D_FEATURE_LEVEL_10_0
+    };
+
     const auto createDevice = [&](const D3D_FEATURE_LEVEL* level, const u32 levels)
     {
-        return D3D11CreateDevice(m_pAdapter, D3D_DRIVER_TYPE_UNKNOWN,
+        static const auto d3d11CreateDevice = static_cast<PFN_D3D11_CREATE_DEVICE>(hD3D->GetProcAddress("D3D11CreateDevice"));
+        return d3d11CreateDevice(m_pAdapter, D3D_DRIVER_TYPE_UNKNOWN,
             nullptr, createDeviceFlags, level, levels,
             D3D11_SDK_VERSION, &pDevice, &FeatureLevel, &pContext);
     };
 
-    R = createDevice(featureLevels, std::size(featureLevels));
-    if (FAILED(R))
-        R = createDevice(featureLevels2, std::size(featureLevels2));
+    if (DX10Only)
+        R = createDevice(featureLevels3, std::size(featureLevels3));
+    else
+    {
+        R = createDevice(featureLevels, std::size(featureLevels));
+        if (FAILED(R))
+            R = createDevice(featureLevels2, std::size(featureLevels2));
+    }
 
     if (SUCCEEDED(R))
     {
+        pContext->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&pContext1));
+        pContext->QueryInterface(__uuidof(ID3DUserDefinedAnnotation), reinterpret_cast<void**>(&pAnnotation));
 #ifdef HAS_DX11_3
         pDevice->QueryInterface(__uuidof(ID3D11Device3), reinterpret_cast<void**>(&pDevice3));
 #endif
         if (FeatureLevel >= D3D_FEATURE_LEVEL_11_0)
+        {
+            D3DCompile = &::D3DCompile;
             ComputeShadersSupported = true;
+        }
         else
         {
+            if (ClearSkyMode)
+            {
+                hD3DCompiler = XRay::LoadModule("d3dcompiler_37");
+                D3DCompile = static_cast<D3DCompileFunc>(hD3DCompiler->GetProcAddress("D3DCompileFromMemory"));
+            }
+            else
+            {
+                D3DCompile = &::D3DCompile;
+            }
+
             D3D11_FEATURE_DATA_D3D10_X_HARDWARE_OPTIONS data;
             pDevice->CheckFeatureSupport(D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS,
                 &data, sizeof(data));
@@ -144,21 +174,12 @@ void CHW::CreateDevice(SDL_Window* sdlWnd)
         SAD4ShaderInstructions = options.SAD4ShaderInstructions;
         ExtendedDoublesShaderInstructions = options.ExtendedDoublesShaderInstructions;
     }
-#else
-    R = D3D10CreateDevice(m_pAdapter, m_DriverType, NULL, createDeviceFlags, D3D10_SDK_VERSION, &pDevice);
-
-    pContext = pDevice;
-    FeatureLevel = D3D_FEATURE_LEVEL_10_0;
-    if (!FAILED(R))
-    {
-        D3DX10GetFeatureLevel1(pDevice, &pDevice1);
-        FeatureLevel = D3D_FEATURE_LEVEL_10_1;
-    }
-    pContext1 = pDevice1;
-#endif
 
     if (FAILED(R))
     {
+        Valid = false;
+        if (!ThisInstanceIsGlobal())
+            return;
         // Fatal error! Cannot create rendering device AT STARTUP !!!
         Msg("Failed to initialize graphics hardware.\n"
             "Please try to restart the game.\n"
@@ -189,9 +210,16 @@ void CHW::CreateDevice(SDL_Window* sdlWnd)
         DXGI_FORMAT_D16_UNORM
     };
     const DXGI_FORMAT selectedFormat = SelectFormat(D3D_FORMAT_SUPPORT_DEPTH_STENCIL, formats);
-    CHECK_OR_EXIT(selectedFormat != DXGI_FORMAT_UNKNOWN,
-        "Failed to initialize graphics hardware: failed to select depth-stencil format."
-        "\nPlease try to restart the game.");
+    if (selectedFormat == DXGI_FORMAT_UNKNOWN)
+    {
+        Valid = false;
+        if (!ThisInstanceIsGlobal())
+            return;
+        Log("Failed to initialize graphics hardware: "
+            "failed to select depth-stencil format.\n"
+            "Please try to restart the game.");
+        xrDebug::DoExit("Failed to initialize graphics hardware.\nPlease try to restart the game.");
+    }
     Caps.fDepth = dx10TextureUtils::ConvertTextureFormat(selectedFormat);
 
     const auto memory = Desc.DedicatedVideoMemory;
@@ -241,7 +269,7 @@ void CHW::CreateSwapChain(HWND hwnd)
 
     sd.OutputWindow = hwnd;
 
-    sd.Windowed = !psDeviceFlags.is(rsFullscreen);
+    sd.Windowed = ThisInstanceIsGlobal() ? !psDeviceFlags.is(rsFullscreen) : true;
 
     //  Additional set up
     sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
@@ -255,8 +283,9 @@ bool CHW::CreateSwapChain2(HWND hwnd)
         return false;
 
 #ifdef HAS_DX11_2
-    m_pAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)&m_pFactory2);
-    if (!m_pFactory2)
+    IDXGIFactory2* pFactory2{};
+    m_pAdapter->GetParent(__uuidof(IDXGIFactory2), (void**)&pFactory2);
+    if (!pFactory2)
         return false;
 
     // Set up the presentation parameters
@@ -292,14 +321,15 @@ bool CHW::CreateSwapChain2(HWND hwnd)
     desc.Scaling = DXGI_SCALING_STRETCH;
 
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC fulldesc{};
-    fulldesc.Windowed = !psDeviceFlags.is(rsFullscreen);
+    fulldesc.Windowed = ThisInstanceIsGlobal() ? !psDeviceFlags.is(rsFullscreen) : true;
 
     // Additional setup
     desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-    IDXGISwapChain1* swapchain = nullptr;
-    HRESULT result = m_pFactory2->CreateSwapChainForHwnd(pDevice, hwnd, &desc,
+    IDXGISwapChain1* swapchain{};
+    const HRESULT result = pFactory2->CreateSwapChainForHwnd(pDevice, hwnd, &desc,
         fulldesc.Windowed ? nullptr : &fulldesc, nullptr, &swapchain);
+    _RELEASE(pFactory2);
 
     if (FAILED(result))
         return false;
@@ -309,7 +339,7 @@ bool CHW::CreateSwapChain2(HWND hwnd)
 
     m_pSwapChain->QueryInterface(__uuidof(IDXGISwapChain2), reinterpret_cast<void**>(&m_pSwapChain2));
 
-    if (m_pSwapChain2)
+    if (m_pSwapChain2 && ThisInstanceIsGlobal())
         Device.PresentationFinished = m_pSwapChain2->GetFrameLatencyWaitableObject();
 
     return true;
@@ -320,15 +350,34 @@ bool CHW::CreateSwapChain2(HWND hwnd)
     return false;
 }
 
+bool CHW::ThisInstanceIsGlobal() const
+{
+    return this == &HW;
+}
+
+void CHW::BeginPixEvent(LPCWSTR wszName) const
+{
+    if (pAnnotation)
+        pAnnotation->BeginEvent(wszName);
+}
+
+void CHW::EndPixEvent() const
+{
+    if (pAnnotation)
+        pAnnotation->EndEvent();
+}
+
 void CHW::DestroyDevice()
 {
     //  Destroy state managers
-    StateManager.Reset();
-    RSManager.ClearStateArray();
-    DSSManager.ClearStateArray();
-    BSManager.ClearStateArray();
-    SSManager.ClearStateArray();
-
+    if (ThisInstanceIsGlobal()) // only if we are global HW
+    {
+        StateManager.Reset();
+        RSManager.ClearStateArray();
+        DSSManager.ClearStateArray();
+        BSManager.ClearStateArray();
+        SSManager.ClearStateArray();
+    }
     //  Must switch to windowed mode to release swap chain
     if (!m_ChainDesc.Windowed)
         m_pSwapChain->SetFullscreenState(FALSE, NULL);
@@ -339,19 +388,15 @@ void CHW::DestroyDevice()
     _RELEASE(m_pSwapChain2);
 #endif
 
-#ifdef USE_DX11
+    _RELEASE(pContext1);
     _RELEASE(pContext);
-#endif
 
-#ifdef USE_DX10
-    _RELEASE(HW.pDevice1);
-#endif
-    _SHOW_REF("refCount:HW.pDevice:", HW.pDevice);
-    _RELEASE(HW.pDevice);
+    _SHOW_REF("refCount:pDevice:", pDevice);
+    _RELEASE(pDevice);
 
 #ifdef HAS_DX11_3
-    _SHOW_REF("refCount:HW.pDevice3:", HW.pDevice3);
-    _RELEASE(HW.pDevice3);
+    _SHOW_REF("refCount:pDevice3:", pDevice3);
+    _RELEASE(pDevice3);
 #endif
 
     DestroyD3D();
@@ -363,7 +408,7 @@ void CHW::DestroyDevice()
 void CHW::Reset()
 {
     DXGI_SWAP_CHAIN_DESC& cd = m_ChainDesc;
-    const bool bWindowed = !psDeviceFlags.is(rsFullscreen);
+    const bool bWindowed = ThisInstanceIsGlobal() ? !psDeviceFlags.is(rsFullscreen) : true;
     cd.Windowed = bWindowed;
     m_pSwapChain->SetFullscreenState(!bWindowed, NULL);
     DXGI_MODE_DESC& desc = m_ChainDesc.BufferDesc;
@@ -375,9 +420,9 @@ void CHW::Reset()
         cd.BufferCount, desc.Width, desc.Height, desc.Format, cd.Flags));
 }
 
-bool CHW::CheckFormatSupport(const DXGI_FORMAT format, const UINT feature) const
+bool CHW::CheckFormatSupport(const DXGI_FORMAT format, const u32 feature) const
 {
-    UINT supports;
+    u32 supports;
 
     if (SUCCEEDED(pDevice->CheckFormatSupport(format, &supports)))
     {
@@ -415,6 +460,9 @@ std::pair<u32, u32> CHW::GetSurfaceSize() const
     };
 }
 
+void CHW::BeginScene() { }
+void CHW::EndScene() { }
+
 void CHW::Present()
 {
     const bool bUseVSync = psDeviceFlags.is(rsFullscreen) &&
@@ -425,15 +473,15 @@ void CHW::Present()
     {
         const float fps = Device.GetStats().fFPS;
         if (fps < 30)
-            m_pSwapChain2->SetSourceSize(Device.dwWidth * 0.85f, Device.dwHeight * 0.85f);
+            m_pSwapChain2->SetSourceSize(UINT(Device.dwWidth * 0.85f), UINT(Device.dwHeight * 0.85f));
         else if (fps < 15)
-            m_pSwapChain2->SetSourceSize(Device.dwWidth * 0.7f, Device.dwHeight * 0.7f);
+            m_pSwapChain2->SetSourceSize(UINT(Device.dwWidth * 0.7f), UINT(Device.dwHeight * 0.7f));
     }
 #endif
     CurrentBackBuffer = (CurrentBackBuffer + 1) % BackBufferCount;
 }
 
-DeviceState CHW::GetDeviceState()
+DeviceState CHW::GetDeviceState() const
 {
     const auto result = m_pSwapChain->Present(0, DXGI_PRESENT_TEST);
 

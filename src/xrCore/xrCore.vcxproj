@@ -1,111 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Mixed|Win32">
-      <Configuration>Mixed</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Mixed|x64">
-      <Configuration>Mixed</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-  </ItemGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\xray_project_configurations.props" />
+  </ImportGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{A0F7D1FB-59A7-4717-A7E4-96F37E91998E}</ProjectGuid>
     <RootNamespace>xrCore</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="$(SolutionDir)Common.props" />
-  <PropertyGroup Label="Globals">
-    <WindowsTargetPlatformVersion>$(xrTargetPlatform)</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\xray_project_configuration.props" />
+  </ImportGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+  <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\xray.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
       <AdditionalIncludeDirectories>$(xrExternals)lzo\include;$(xrExternals)mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USRDLL;XRCORE_EXPORTS;CRYPTO_BUILD;CI=$(CI);APPVEYOR=$(APPVEYOR);APPVEYOR_BUILD_VERSION=$(APPVEYOR_BUILD_VERSION);APPVEYOR_ACCOUNT_NAME=$(APPVEYOR_ACCOUNT_NAME);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <WarningLevel>Level1</WarningLevel>
     </ClCompile>
     <Link>
       <AdditionalDependencies>PowrProf.lib;DbgHelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -119,184 +37,6 @@ if errorlevel 1 (
 echo git found
 call .GitInfo.cmd</Command>
     </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>if not exist "$(OutDir)FreeImage.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll" "$(OutDir)FreeImage.dll"
-if not exist "$(OutDir)FreeImagePlus.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll" "$(OutDir)FreeImagePlus.dll"
-
-if not exist "$(OutDir)tbb_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_debug.dll" "$(OutDir)tbb_debug.dll"
-if not exist "$(OutDir)tbb_preview_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview_debug.dll" "$(OutDir)tbb_preview_debug.dll"
-if not exist "$(OutDir)tbbmalloc_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_debug.dll" "$(OutDir)tbbmalloc_debug.dll"
-if not exist "$(OutDir)tbbmalloc_proxy_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy_debug.dll" "$(OutDir)tbbmalloc_proxy_debug.dll"</Command>
-      <Outputs>$(OutDir)FreeImage.dll;$(OutDir)FreeImagePlus.dll;$(OutDir)tbb_debug.dll;$(OutDir)tbb_preview_debug.dll;$(OutDir)tbbmalloc_debug.dll;$(OutDir)tbbmalloc_proxy_debug.dll;%(Outputs)</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll;$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_debug.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview_debug.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_debug.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy_debug.dll;%(Inputs)</Inputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)lzo\include;$(xrExternals)mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRCORE_EXPORTS;CRYPTO_BUILD;CI=$(CI);APPVEYOR=$(APPVEYOR);APPVEYOR_BUILD_VERSION=$(APPVEYOR_BUILD_VERSION);APPVEYOR_ACCOUNT_NAME=$(APPVEYOR_ACCOUNT_NAME);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <WarningLevel>Level1</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>PowrProf.lib;DbgHelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>where /q git
-if errorlevel 1 (
-  echo git not found
-  goto :EOF
-)
-echo git found
-call .GitInfo.cmd</Command>
-    </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>if not exist "$(OutDir)FreeImage.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll" "$(OutDir)FreeImage.dll"
-if not exist "$(OutDir)FreeImagePlus.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll" "$(OutDir)FreeImagePlus.dll"
-
-if not exist "$(OutDir)tbb_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_debug.dll" "$(OutDir)tbb_debug.dll"
-if not exist "$(OutDir)tbb_preview_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview_debug.dll" "$(OutDir)tbb_preview_debug.dll"
-if not exist "$(OutDir)tbbmalloc_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_debug.dll" "$(OutDir)tbbmalloc_debug.dll"
-if not exist "$(OutDir)tbbmalloc_proxy_debug.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy_debug.dll" "$(OutDir)tbbmalloc_proxy_debug.dll"</Command>
-      <Outputs>$(OutDir)FreeImage.dll;$(OutDir)FreeImagePlus.dll;$(OutDir)tbb_debug.dll;$(OutDir)tbb_preview_debug.dll;$(OutDir)tbbmalloc_debug.dll;$(OutDir)tbbmalloc_proxy_debug.dll;%(Outputs)</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll;$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_debug.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview_debug.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_debug.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy_debug.dll;%(Inputs)</Inputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)lzo\include;$(xrExternals)mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRCORE_EXPORTS;CRYPTO_BUILD;CI=$(CI);APPVEYOR=$(APPVEYOR);APPVEYOR_BUILD_VERSION=$(APPVEYOR_BUILD_VERSION);APPVEYOR_ACCOUNT_NAME=$(APPVEYOR_ACCOUNT_NAME);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <WarningLevel>Level1</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>PowrProf.lib;DbgHelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>where /q git
-if errorlevel 1 (
-  echo git not found
-  goto :EOF
-)
-echo git found
-call .GitInfo.cmd</Command>
-    </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>if not exist "$(OutDir)FreeImage.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll" "$(OutDir)FreeImage.dll"
-if not exist "$(OutDir)FreeImagePlus.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll" "$(OutDir)FreeImagePlus.dll"
-
-if not exist "$(OutDir)tbb.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll" "$(OutDir)tbb.dll"
-if not exist "$(OutDir)tbb_preview.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll" "$(OutDir)tbb_preview.dll"
-if not exist "$(OutDir)tbbmalloc.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll" "$(OutDir)tbbmalloc.dll"
-if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll" "$(OutDir)tbbmalloc_proxy.dll"</Command>
-      <Outputs>$(OutDir)FreeImage.dll;$(OutDir)FreeImagePlus.dll;$(OutDir)tbb.dll;$(OutDir)tbb_preview.dll;$(OutDir)tbbmalloc.dll;$(OutDir)tbbmalloc_proxy.dll;%(Outputs)</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll;$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll;%(Inputs)</Inputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)lzo\include;$(xrExternals)mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRCORE_EXPORTS;CRYPTO_BUILD;CI=$(CI);APPVEYOR=$(APPVEYOR);APPVEYOR_BUILD_VERSION=$(APPVEYOR_BUILD_VERSION);APPVEYOR_ACCOUNT_NAME=$(APPVEYOR_ACCOUNT_NAME);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <WarningLevel>Level1</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>PowrProf.lib;DbgHelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>where /q git
-if errorlevel 1 (
-  echo git not found
-  goto :EOF
-)
-echo git found
-call .GitInfo.cmd</Command>
-    </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>if not exist "$(OutDir)FreeImage.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll" "$(OutDir)FreeImage.dll"
-if not exist "$(OutDir)FreeImagePlus.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll" "$(OutDir)FreeImagePlus.dll"
-
-if not exist "$(OutDir)tbb.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll" "$(OutDir)tbb.dll"
-if not exist "$(OutDir)tbb_preview.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll" "$(OutDir)tbb_preview.dll"
-if not exist "$(OutDir)tbbmalloc.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll" "$(OutDir)tbbmalloc.dll"
-if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll" "$(OutDir)tbbmalloc_proxy.dll"</Command>
-      <Outputs>$(OutDir)FreeImage.dll;$(OutDir)FreeImagePlus.dll;$(OutDir)tbb.dll;$(OutDir)tbb_preview.dll;$(OutDir)tbbmalloc.dll;$(OutDir)tbbmalloc_proxy.dll;%(Outputs)</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll;$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll;%(Inputs)</Inputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)lzo\include;$(xrExternals)mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRCORE_EXPORTS;CRYPTO_BUILD;CI=$(CI);APPVEYOR=$(APPVEYOR);APPVEYOR_BUILD_VERSION=$(APPVEYOR_BUILD_VERSION);APPVEYOR_ACCOUNT_NAME=$(APPVEYOR_ACCOUNT_NAME);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <WarningLevel>Level1</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>PowrProf.lib;DbgHelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>where /q git
-if errorlevel 1 (
-  echo git not found
-  goto :EOF
-)
-echo git found
-call .GitInfo.cmd</Command>
-    </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>if not exist "$(OutDir)FreeImage.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll" "$(OutDir)FreeImage.dll"
-if not exist "$(OutDir)FreeImagePlus.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll" "$(OutDir)FreeImagePlus.dll"
-
-if not exist "$(OutDir)tbb.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll" "$(OutDir)tbb.dll"
-if not exist "$(OutDir)tbb_preview.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll" "$(OutDir)tbb_preview.dll"
-if not exist "$(OutDir)tbbmalloc.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll" "$(OutDir)tbbmalloc.dll"
-if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll" "$(OutDir)tbbmalloc_proxy.dll"</Command>
-      <Outputs>$(OutDir)FreeImage.dll;$(OutDir)FreeImagePlus.dll;$(OutDir)tbb.dll;$(OutDir)tbb_preview.dll;$(OutDir)tbbmalloc.dll;$(OutDir)tbbmalloc_proxy.dll;%(Outputs)</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll;$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll;%(Inputs)</Inputs>
-    </CustomBuildStep>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)lzo\include;$(xrExternals)mimalloc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRCORE_EXPORTS;CRYPTO_BUILD;CI=$(CI);APPVEYOR=$(APPVEYOR);APPVEYOR_BUILD_VERSION=$(APPVEYOR_BUILD_VERSION);APPVEYOR_ACCOUNT_NAME=$(APPVEYOR_ACCOUNT_NAME);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>true</TreatWarningAsError>
-      <WarningLevel>Level1</WarningLevel>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>PowrProf.lib;DbgHelp.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
-    <PreBuildEvent>
-      <Command>where /q git
-if errorlevel 1 (
-  echo git not found
-  goto :EOF
-)
-echo git found
-call .GitInfo.cmd</Command>
-    </PreBuildEvent>
-    <CustomBuildStep>
-      <Command>if not exist "$(OutDir)FreeImage.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll" "$(OutDir)FreeImage.dll"
-if not exist "$(OutDir)FreeImagePlus.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll" "$(OutDir)FreeImagePlus.dll"
-
-if not exist "$(OutDir)tbb.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll" "$(OutDir)tbb.dll"
-if not exist "$(OutDir)tbb_preview.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll" "$(OutDir)tbb_preview.dll"
-if not exist "$(OutDir)tbbmalloc.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll" "$(OutDir)tbbmalloc.dll"
-if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll" "$(OutDir)tbbmalloc_proxy.dll"</Command>
-      <Outputs>$(OutDir)FreeImage.dll;$(OutDir)FreeImagePlus.dll;$(OutDir)tbb.dll;$(OutDir)tbb_preview.dll;$(OutDir)tbbmalloc.dll;$(OutDir)tbbmalloc_proxy.dll;%(Outputs)</Outputs>
-      <TreatOutputAsContent>true</TreatOutputAsContent>
-      <Inputs>$(xrSdkDir)binaries\$(PlatformShortName)\FreeImage.dll;$(xrSdkDir)binaries\$(PlatformShortName)\FreeImagePlus.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbb_preview.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc.dll;$(xrSdkDir)binaries\$(PlatformShortName)\tbbmalloc_proxy.dll;%(Inputs)</Inputs>
-    </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Animation\Bone.cpp" />
@@ -313,7 +53,7 @@ if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(Platf
     <ClCompile Include="Compression\ppmd_compressor.cpp" />
     <ClCompile Include="Compression\rt_compressor.cpp" />
     <ClCompile Include="Compression\rt_compressor9.cpp" />
-    <ClCompile Include="cpuid.cpp" />
+    <ClCompile Include="xr_cpuid.cpp" />
     <ClCompile Include="crc32.cpp" />
     <ClCompile Include="Crypto\trivial_encryptor.cpp" />
     <ClCompile Include="Crypto\xr_dsa.cpp" />
@@ -346,14 +86,7 @@ if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(Platf
     <ClCompile Include="PostProcess\PostProcess.cpp" />
     <ClCompile Include="PostProcess\PPInfo.cpp" />
     <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'">Create</PrecompiledHeader>
-      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'">false</ShowIncludes>
-      <ShowIncludes Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'">false</ShowIncludes>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="stream_reader.cpp" />
     <ClCompile Include="string_concatenations.cpp" />
@@ -419,7 +152,7 @@ if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(Platf
     <ClInclude Include="Containers\AssociativeVector.hpp" />
     <ClInclude Include="Containers\AssociativeVectorComparer.hpp" />
     <ClInclude Include="Containers\FixedMap.h" />
-    <ClInclude Include="cpuid.h" />
+    <ClInclude Include="xr_cpuid.h" />
     <ClInclude Include="Crypto\trivial_encryptor.h" />
     <ClInclude Include="Crypto\xr_dsa.h" />
     <ClInclude Include="Crypto\xr_dsa_signer.h" />
@@ -469,6 +202,8 @@ if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(Platf
     <ClInclude Include="string_concatenations_inline.h" />
     <ClInclude Include="Text\StringConversion.hpp" />
     <ClInclude Include="Threading\Event.hpp" />
+    <ClInclude Include="Threading\ParallelFor.hpp" />
+    <ClInclude Include="Threading\ParallelForEach.hpp" />
     <ClInclude Include="Threading\ScopeLock.hpp" />
     <ClInclude Include="Threading\Lock.hpp" />
     <ClInclude Include="Threading\Task.hpp" />
@@ -559,19 +294,14 @@ if not exist "$(OutDir)tbbmalloc_proxy.dll" copy /y "$(xrSdkDir)binaries\$(Platf
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets" Condition="Exists('..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets')" />
-    <Import Project="..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets" Condition="Exists('..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets')" />
+    <Import Project="..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets" Condition="Exists('..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets')" />
+    <Import Project="..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets" Condition="Exists('..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets')" />
   </ImportGroup>
-  <ProjectExtensions>
-    <VisualStudio>
-      <UserProperties DevPartner_IsInstrumented="1" />
-    </VisualStudio>
-  </ProjectExtensions>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>Данный проект ссылается на пакеты NuGet, отсутствующие на этом компьютере. Используйте восстановление пакетов NuGet, чтобы скачать их.  Дополнительную информацию см. по адресу: http://go.microsoft.com/fwlink/?LinkID=322105. Отсутствует следующий файл: {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets'))" />
-    <Error Condition="!Exists('..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets'))" />
+    <Error Condition="!Exists('..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets'))" />
+    <Error Condition="!Exists('..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets'))" />
   </Target>
 </Project>

@@ -14,7 +14,7 @@ url="https://github.com/OpenXRay/xray-16"
 license=('custom:Custom 3-сlause BSD')
 install="info.install"
 makedepends=(gcc git cmake libglvnd libjpeg6-turbo ncurses pcre2 pcre)
-depends=(glew sdl2 openal intel-tbb crypto++ liblockfile freeimage libogg libtheora libvorbis lzo lzop libjpeg-turbo)
+depends=(glew sdl2 openal crypto++ liblockfile freeimage libogg libtheora libvorbis lzo lzop libjpeg-turbo)
 conflicts=(openxray openxray-git)
 
 pkgver() {
@@ -27,14 +27,15 @@ build() {
 #  rm -f -R bin
    mkdir -p bin
    cd bin
-   cmake ..
+   cmake .. -DCMAKE_BUILD_TYPE=Release \
+   -DCMAKE_INSTALL_PREFIX=/usr \
+   -DCMAKE_INSTALL_LIBDIR=lib
    make
 }
 
 package() {
     cd ../../bin
     make DESTDIR="${pkgdir}/" install
-    mv "${pkgdir}/usr/games/" "${pkgdir}/usr/bin"
     mkdir -p "${pkgdir}/usr/share/licenses/$pkgname/"
     cp ../License.txt "${pkgdir}/usr/share/licenses/$pkgname/"
 }

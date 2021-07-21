@@ -19,16 +19,16 @@
 #define fdRLE10 0x03ede5bdb // 1/ln10
 
 // integer math on floats
-#ifdef _M_AMD64
-IC bool negative(const float f) { return f < 0; }
-IC bool positive(const float f) { return f >= 0; }
-IC void set_negative(float& f) { f = -fabsf(f); }
-IC void set_positive(float& f) { f = fabsf(f); }
-#else
+#ifdef XR_ARCHITECTURE_X86
 IC bool negative(const float& f) { return *(unsigned*)&f & fdSGN; }
 IC bool positive(const float& f) { return (*(unsigned*)&f & fdSGN) == 0; }
 IC void set_negative(float& f) { *(unsigned*)&f |= fdSGN; }
 IC void set_positive(float& f) { *(unsigned*)&f &= ~fdSGN; }
+#else
+IC bool negative(const float f) { return std::signbit(f); }
+IC bool positive(const float f) { return !negative(f); }
+IC void set_negative(float& f) { f = -fabsf(f); }
+IC void set_positive(float& f) { f = fabsf(f); }
 #endif
 
 /*
@@ -111,7 +111,7 @@ IC bool fis_denormal(const float& f) { return !(*(int*)&f & 0x7f800000); }
 // Approximated calculations
 IC float apx_InvSqrt(const float& n)
 {
-    long tmp = long(0xBE800000) - *(long*)&n >> 1;
+    long tmp = (long(0xBE800000) - *(long*)&n) >> 1;
     float y = *(float*)&tmp;
     return y * (1.47f - 0.47f * n * y * y);
 }

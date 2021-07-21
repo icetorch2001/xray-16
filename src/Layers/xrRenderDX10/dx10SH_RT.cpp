@@ -116,7 +116,7 @@ void CRT::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/
     const bool useAsDepth = usage != D3DUSAGE_RENDERTARGET;
 
     // Validate render-target usage
-    UINT required = D3D_FORMAT_SUPPORT_TEXTURE2D;
+    u32 required = D3D_FORMAT_SUPPORT_TEXTURE2D;
 
     if (useAsDepth)
         required |= D3D_FORMAT_SUPPORT_DEPTH_STENCIL;
@@ -151,7 +151,7 @@ void CRT::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/
             desc.BindFlags = (useAsDepth ? D3D_BIND_DEPTH_STENCIL : (initialBindFlag | D3D_BIND_RENDER_TARGET));
             if (RImplementation.o.dx10_msaa_opt)
             {
-                desc.SampleDesc.Quality = UINT(D3D_STANDARD_MULTISAMPLE_PATTERN);
+                desc.SampleDesc.Quality = u32(D3D_STANDARD_MULTISAMPLE_PATTERN);
             }
         }
 
@@ -264,6 +264,13 @@ void CRT::destroy()
 
 void CRT::reset_begin() { destroy(); }
 void CRT::reset_end() { create(*cName, dwWidth, dwHeight, fmt, sampleCount, { dwFlags }); }
+
+void CRT::resolve_into(CRT& destination) const
+{
+    VERIFY(fmt == destination.fmt); // only RTs with same format supported
+    HW.pContext->ResolveSubresource(destination.pTexture->surface_get(), 0,
+        pTexture->surface_get(), 0, dx10TextureUtils::ConvertTextureFormat(fmt));
+}
 
 void resptrcode_crt::create(LPCSTR Name, u32 w, u32 h, D3DFORMAT f, u32 SampleCount /*= 1*/, Flags32 flags /*= 0*/)
 {

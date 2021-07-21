@@ -101,7 +101,7 @@ template<typename Result, typename ... Args>
 class xrDelegate;
 
 template<typename Result, typename ... Args>
-class xrDelegate<Result(Args...)> : public xrAbstractDelegate<Result>
+class xrDelegate<Result(Args...)> final : public xrAbstractDelegate<Result>
 {
 public:    
     using inherited = xrAbstractDelegate<Result>;
@@ -154,7 +154,7 @@ public:
         bind(fx, tx);
     }
 
-    ~xrDelegate() = default;
+    ~xrDelegate() override = default;
 
     template<typename TClass, typename TFunction>
     void bind(TClass fx, TFunction tx)

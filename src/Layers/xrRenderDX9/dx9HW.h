@@ -23,16 +23,26 @@ public:
 
     void Reset();
 
-    BOOL support(D3DFORMAT fmt, DWORD type, DWORD usage);
+    BOOL support(D3DFORMAT fmt, u32 type, u32 usage) const;
+    static bool GivenGPUIsIntelGMA(u32 id_vendor, u32 id_device);
 
     std::pair<u32, u32> GetSurfaceSize() const;
+    DeviceState GetDeviceState() const;
+
+public:
+    void BeginScene();
+    void EndScene();
     void Present();
-    DeviceState GetDeviceState();
+
+public:
+    void BeginPixEvent(LPCWSTR wszName) const;
+    void EndPixEvent() const;
 
 private:
-    u32 selectPresentInterval();
-    u32 selectGPU();
-    D3DFORMAT selectDepthStencil(D3DFORMAT);
+    u32 selectPresentInterval() const;
+    u32 selectGPU() const;
+    D3DFORMAT selectDepthStencil(D3DFORMAT) const;
+    bool ThisInstanceIsGlobal() const;
 
 public:
     CHWCaps Caps;
@@ -50,7 +60,10 @@ public:
 
     IDirect3D9* pD3D = nullptr; // D3D
 
-    UINT DevAdapter;
+    u32 DevAdapter;
+
+    decltype(&D3DPERF_BeginEvent) d3dperf_BeginEvent = nullptr;
+    decltype(&D3DPERF_EndEvent) d3dperf_EndEvent = nullptr;
 
 #if !defined(_MAYA_EXPORT)
     stats_manager stats_manager;

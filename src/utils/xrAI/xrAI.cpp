@@ -32,7 +32,7 @@ LPCSTR GAME_CONFIG = "game.ltx";
 
 extern void clear_temp_folder();
 
-void execute(LPSTR cmd)
+void execute(pstr cmd)
 {
     // Load project
     string4096 name;
@@ -106,7 +106,7 @@ void execute(LPSTR cmd)
 
             R_ASSERT2(hFactory->IsLoaded(), "Factory DLL raised exception during loading or there is no factory DLL at all");
 
-#ifdef XR_ARCHITECTURE_X64
+#if defined(XR_ARCHITECTURE_X64) || defined(XR_ARCHITECTURE_E2K)
             pcstr create_entity_name = "create_entity";
             pcstr destroy_entity_name = "destroy_entity";
 #else
@@ -132,7 +132,7 @@ void execute(LPSTR cmd)
     }
 }
 
-void Startup(LPSTR lpCmdLine)
+void Startup(pstr lpCmdLine)
 {
     string4096 cmd;
 
@@ -160,7 +160,7 @@ void Startup(LPSTR lpCmdLine)
     Logger.Destroy();
 }
 
-int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, pstr lpCmdLine, int nCmdShow)
 {
     xrDebug::Initialize(lpCmdLine);
     Core.Initialize("xrAI");

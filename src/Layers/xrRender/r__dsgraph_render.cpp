@@ -336,6 +336,8 @@ class hud_transform_helper
 {
     Fmatrix Pold;
     Fmatrix FTold;
+    static u32 cullMode;
+    static bool isActive;
 
 public:
     hud_transform_helper()
@@ -369,6 +371,10 @@ public:
         RCache.set_xform_project(Device.mProject);
 
         RImplementation.rmNear();
+
+        // preserve culling mode
+        cullMode = RCache.get_CullMode();
+        isActive = true;
     }
 
     ~hud_transform_helper()
@@ -379,8 +385,26 @@ public:
         Device.mProject = Pold;
         Device.mFullTransform = FTold;
         RCache.set_xform_project(Device.mProject);
+        // restore culling mode
+        RCache.set_CullMode(cullMode);
+        isActive = false;
+    }
+
+    static void apply_custom_state()
+    {
+        if (!isActive || !psHUD_Flags.test(HUD_LEFT_HANDED))
+            return;
+
+        // Change culling mode if HUD meshes were flipped
+        if (cullMode != CULL_NONE)
+        {
+            RCache.set_CullMode(cullMode == CULL_CW ? CULL_CCW : CULL_CW);
+        }
     }
 };
+
+u32 hud_transform_helper::cullMode = CULL_NONE;
+bool hud_transform_helper::isActive = false;
 
 template<class T>
 void __fastcall render_item(const T& item)
@@ -391,6 +415,7 @@ void __fastcall render_item(const T& item)
     RCache.set_xform_world(item.second.Matrix);
     RImplementation.apply_object(item.second.pObject);
     RImplementation.apply_lmaterial();
+    hud_transform_helper::apply_custom_state();
     //--#SM+#-- Обновляем шейдерные данные модели [update shader values for this model]
     //RCache.hemi.c_update(V);
     V->Render(calcLOD(item.first, V->vis.sphere.R));
@@ -529,10 +554,6 @@ void D3DXRenderBase::r_dsgraph_render_subspace(IRender_Sector* _sector, CFrustum
     PIX_EVENT(r_dsgraph_render_subspace);
     RImplementation.marker++; // !!! critical here
 
-    // Save and build new frustum, disable HOM
-    CFrustum ViewSave = ViewBase;
-    ViewBase = *_frustum;
-
     if (_precise_portals && RImplementation.rmPortals)
     {
         // Check if camera is too near to some portal - if so force DualRender
@@ -550,7 +571,7 @@ void D3DXRenderBase::r_dsgraph_render_subspace(IRender_Sector* _sector, CFrustum
     }
 
     // Traverse sector/portal structure
-    PortalTraverser.traverse(_sector, ViewBase, _cop, mCombined, 0);
+    PortalTraverser.traverse(_sector, *_frustum, _cop, mCombined, 0);
 
     // Determine visibility for static geometry hierrarhy
     if (psDeviceFlags.test(rsDrawStatic))
@@ -569,7 +590,7 @@ void D3DXRenderBase::r_dsgraph_render_subspace(IRender_Sector* _sector, CFrustum
     if (_dynamic && psDeviceFlags.test(rsDrawDynamic))
     {
         // Traverse object database
-        g_SpatialSpace->q_frustum(lstRenderables, ISpatial_DB::O_ORDERED, STYPE_RENDERABLE, ViewBase);
+        g_SpatialSpace->q_frustum(lstRenderables, ISpatial_DB::O_ORDERED, STYPE_RENDERABLE, *_frustum);
 
         // Determine visibility for dynamic part of scene
         for (u32 o_it = 0; o_it < lstRenderables.size(); o_it++)
@@ -622,9 +643,6 @@ void D3DXRenderBase::r_dsgraph_render_subspace(IRender_Sector* _sector, CFrustum
         }
 #endif
     }
-
-    // Restore
-    ViewBase = ViewSave;
 }
 
 #include "SkeletonCustom.h"

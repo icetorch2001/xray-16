@@ -29,27 +29,24 @@ static const float OPTIMIZATION_DISTANCE = 100.f;
 
 static bool stalker_use_dynamic_lights = false;
 
-CTorch::CTorch(void)
+CTorch::CTorch()
+    : fBrightness(1.f), lanim(nullptr), guid_bone(BI_NONE),
+      m_delta_h(0), m_switched_on(false),
+      light_render(GEnv.Render->light_create()),
+      light_omni(GEnv.Render->light_create()),
+      glow_render(GEnv.Render->glow_create()),
+      m_bNightVisionEnabled(false), m_bNightVisionOn(false), m_night_vision(nullptr)
 {
-    light_render = GEnv.Render->light_create();
+    m_prev_hp.set(0, 0);
+
     light_render->set_type(IRender_Light::SPOT);
     light_render->set_shadow(true);
-    light_omni = GEnv.Render->light_create();
     light_omni->set_type(IRender_Light::POINT);
     light_omni->set_shadow(false);
 
-    m_switched_on = false;
-    glow_render = GEnv.Render->glow_create();
-    lanim = 0;
-    fBrightness = 1.f;
-
-    m_prev_hp.set(0, 0);
-    m_delta_h = 0;
-    m_night_vision = NULL;
-
     // Disabling shift by x and z axes for 1st render,
     // because we don't have dynamic lighting in it.
-    if (GEnv.CurrentRenderer == 1)
+    if (GEnv.Render->GenerationIsR1())
     {
         TORCH_OFFSET.x = 0;
         TORCH_OFFSET.z = 0;
@@ -209,7 +206,7 @@ bool CTorch::net_Spawn(CSE_Abstract* DC)
     if (!inherited::net_Spawn(DC))
         return (FALSE);
 
-    bool b_r2 = !psDeviceFlags.test(rsR1);
+    bool b_r2 = GEnv.Render->GenerationIsR2OrHigher();
 
     IKinematics* K = smart_cast<IKinematics*>(Visual());
     CInifile* pUserData = K->LL_UserData();
@@ -429,7 +426,7 @@ void CTorch::net_Export(NET_Packet& P)
     inherited::net_Export(P);
     //	P.w_u8						(m_switched_on ? 1 : 0);
 
-    BYTE F = 0;
+    u8 F = 0;
     F |= (m_switched_on ? eTorchActive : 0);
     F |= (m_bNightVisionOn ? eNightVisionActive : 0);
     const CActor* pA = smart_cast<const CActor*>(H_Parent());
@@ -446,7 +443,7 @@ void CTorch::net_Import(NET_Packet& P)
 {
     inherited::net_Import(P);
 
-    BYTE F = P.r_u8();
+    u8 F = P.r_u8();
     bool new_m_switched_on = !!(F & eTorchActive);
     bool new_m_bNightVisionOn = !!(F & eNightVisionActive);
 

@@ -46,17 +46,38 @@ using VTPause = void __cdecl();
 using VTResume = void __cdecl();
 };
 
+class RendererModule
+{
+public:
+    virtual ~RendererModule() = default;
+    virtual const xr_vector<pcstr>& ObtainSupportedModes() = 0;
+    virtual void SetupEnv(pcstr mode) = 0;
+};
+
 class ENGINE_API CEngineAPI
 {
-    using SupportCheck = bool(*)();
-    using SetupEnv     = void(*)();
-    using GetModeName  = pcstr(*)();
+    using InitializeGameLibraryProc = void(*)();
+    using FinalizeGameLibraryProc = void(*)();
+
+    using GetRendererModule = RendererModule*(*)();
+
+    struct RendererDesc
+    {
+        pcstr libraryName;
+        XRay::Module handle;
+        RendererModule* module;
+    };
+
+    xr_vector<RendererDesc> renderers;
+    xr_map<shared_str, RendererModule*> renderModes;
+
+    RendererModule* selectedRenderer;
 
     XRay::Module hGame;
     XRay::Module hTuner;
-    xr_map<pcstr, XRay::Module> renderers;
 
-    SetupEnv setupSelectedRenderer;
+    InitializeGameLibraryProc pInitializeGame;
+    FinalizeGameLibraryProc pFinalizeGame;
 
 public:
     BENCH_SEC_SCRAMBLEMEMBER1
@@ -71,7 +92,7 @@ public:
     void Initialize();
 
     void InitializeRenderers();
-    void SelectRenderer();
+    pcstr SelectRenderer();
     void CloseUnusedLibraries();
 
     void Destroy();

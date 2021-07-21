@@ -12,8 +12,9 @@
 #include "serialize.h"
 #include "ETextureParams.h"
 
-extern "C" bool __declspec(dllimport) __stdcall DXTCompress(
-    LPCSTR out_name, u8* raw_data, u8* normal_map, u32 w, u32 h, u32 pitch, STextureParams* fmt, u32 depth);
+extern "C" XR_IMPORT
+bool __stdcall DXTCompress(pcstr out_name, u8* raw_data, u8* normal_map,
+    u32 w, u32 h, u32 pitch, STextureParams* fmt, u32 depth);
 
 // extern BOOL ApplyBorders	(lm_layer &lm, u32 ref);
 
@@ -175,7 +176,7 @@ void CLightmap::Save(LPCSTR path)
         string_path FN;
         xr_sprintf(lm_texture.name, "lmap#%d", lmapNameID);
         xr_sprintf(FN, "%s%s_1.dds", path, lm_texture.name);
-        BYTE* raw_data = LPBYTE(&*lm_packed.begin());
+        u8* raw_data = (u8*)(&*lm_packed.begin());
         u32 w = lm_texture.dwWidth; // lm.width;
         u32 h = lm_texture.dwHeight; // lm.height;
         u32 pitch = w * 4;
@@ -197,7 +198,7 @@ void CLightmap::Save(LPCSTR path)
         string_path FN;
         xr_sprintf(lm_texture.name, "lmap#%d", lmapNameID);
         xr_sprintf(FN, "%s%s_2.dds", path, lm_texture.name);
-        BYTE* raw_data = LPBYTE(&*hemi_packed.begin());
+        u8* raw_data = (u8*)(&*hemi_packed.begin());
 
         STextureParams fmt;
         fmt.fmt = STextureParams::tfDXT5;

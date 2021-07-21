@@ -1,165 +1,44 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ItemGroup Label="ProjectConfigurations">
-    <ProjectConfiguration Include="Debug|Win32">
-      <Configuration>Debug</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Debug|x64">
-      <Configuration>Debug</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Mixed|Win32">
-      <Configuration>Mixed</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Mixed|x64">
-      <Configuration>Mixed</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|Win32">
-      <Configuration>Release</Configuration>
-      <Platform>Win32</Platform>
-    </ProjectConfiguration>
-    <ProjectConfiguration Include="Release|x64">
-      <Configuration>Release</Configuration>
-      <Platform>x64</Platform>
-    </ProjectConfiguration>
-  </ItemGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\..\xray_project_configurations.props" />
+  </ImportGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2C5AF8C8-96A6-45B2-860B-5E9C9911DDD6}</ProjectGuid>
     <RootNamespace>xrRender_GL</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <Import Project="$(SolutionDir)Common.props" />
-  <PropertyGroup Label="Globals">
-    <WindowsTargetPlatformVersion>$(xrTargetPlatform)</WindowsTargetPlatformVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>$(xrPlatformToolset)</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
-  </PropertyGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\..\xray_project_configuration.props" />
+  </ImportGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\..\xray.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup>
-    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
-  </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-    </ClCompile>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Layers\xrRender_R2;$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;$(xrExternals)sse2neon\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USRDLL;XRRENDER_GL_EXPORTS;USE_OGL;NO_XR_VDECLARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glew32s.lib;oalib.lib;opengl32.lib;glu32.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)nvapi\x86;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRRENDER_GL_EXPORTS;USE_OGL;NO_XR_VDECLARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>false</TreatWarningAsError>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>glew32s.lib;oalib.lib;opengl32.lib;glu32.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)nvapi\amd64;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRRENDER_GL_EXPORTS;USE_OGL;NO_XR_VDECLARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>false</TreatWarningAsError>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>glew32s.lib;oalib.lib;opengl32.lib;glu32.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)nvapi\x86;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRRENDER_GL_EXPORTS;USE_OGL;NO_XR_VDECLARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <FloatingPointModel>Precise</FloatingPointModel>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>false</TreatWarningAsError>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>glew32s.lib;oalib.lib;opengl32.lib;glu32.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)nvapi\amd64;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|Win32'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRRENDER_GL_EXPORTS;USE_OGL;NO_XR_VDECLARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>false</TreatWarningAsError>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>glew32s.lib;oalib.lib;opengl32.lib;glu32.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)nvapi\x86;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Mixed|x64'">
-    <ClCompile>
-      <AdditionalIncludeDirectories>$(xrExternals)OpenAutomate\inc;$(xrExternals)gl\include;$(xrExternals)glew\include;$(xrExternals)gli;$(xrExternals)gli\external\glm;$(xrExternals)AGS_SDK;$(xrExternals)glslang\glslang\Public;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USRDLL;XRRENDER_GL_EXPORTS;USE_OGL;NO_XR_VDECLARATOR;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <TreatWarningAsError>false</TreatWarningAsError>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>glew32s.lib;oalib.lib;opengl32.lib;glu32.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)nvapi\amd64;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32s.lib;glu32.lib;oalib.lib;nvapi$(PlatformArchitecture).lib;amd_ags_$(PlatformShortName).lib;FreeImage.lib;FreeImagePlus.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(xrExternals)OpenAutomate\libraries;$(xrExternals)AGS_SDK\ags_lib\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='Win32'">$(xrExternals)nvapi\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories Condition="'$(Platform)'=='x64'">$(xrExternals)nvapi\amd64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\xrRenderGL\Blender_Recorder_GL.cpp" />
+    <ClCompile Include="..\xrRender\blenders\Blender_BmmD_deferred.cpp" />
+    <ClCompile Include="..\xrRender\blenders\Blender_detail_still_deferred.cpp" />
+    <ClCompile Include="..\xrRender\blenders\Blender_Model_EbB_deferred.cpp" />
+    <ClCompile Include="..\xrRender\blenders\Blender_Particle_deferred.cpp" />
+    <ClCompile Include="..\xrRender\blenders\Blender_tree_deferred.cpp" />
     <ClCompile Include="..\xrRender\blenders\glRainBlender.cpp" />
     <ClCompile Include="..\xrRenderGL\glHW.cpp" />
     <ClCompile Include="..\xrRenderGL\glBufferUtils.cpp" />
@@ -175,7 +54,6 @@
     <ClCompile Include="..\xrRender\ColorMapManager.cpp" />
     <ClCompile Include="..\xrRender\D3DUtils.cpp" />
     <ClCompile Include="..\xrRender\D3DXRenderBase.cpp" />
-    <ClCompile Include="..\xrRender\Debug\dxPixEventWrapper.cpp" />
     <ClCompile Include="..\xrRender\DetailManager_VS.cpp" />
     <ClCompile Include="..\xrRender\du_box.cpp" />
     <ClCompile Include="..\xrRender\du_cone.cpp" />
@@ -209,6 +87,8 @@
     <ClCompile Include="..\xrRender\R_DStreams.cpp" />
     <ClCompile Include="..\xrRender\r__pixel_calculator.cpp" />
     <ClCompile Include="..\xrRender\r__screenshot.cpp" />
+    <ClCompile Include="..\xrRender\r__sector_detect.cpp" />
+    <ClCompile Include="..\xrRender\r__sync_point.cpp" />
     <ClCompile Include="..\xrRender\Shader.cpp" />
     <ClCompile Include="..\xrRender\blenders\blender_bloom_build.cpp" />
     <ClCompile Include="..\xrRender\blenders\blender_combine.cpp" />
@@ -223,47 +103,47 @@
     <ClCompile Include="..\xrRender\blenders\blender_light_spot.cpp" />
     <ClCompile Include="..\xrRender\blenders\blender_luminance.cpp" />
     <ClCompile Include="..\xrRender\blenders\blender_ssao.cpp" />
-    <ClCompile Include="gl_loader.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_blenders.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_loader.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_accum_omnipart_geom.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_accum_point_geom.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_accum_reflected.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_accum_spot_geom.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_draw_volume.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_enable_scissor.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_phase_accumulator.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_phase_bloom.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_phase_luminance.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_phase_PP.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_rendertarget_phase_smap_S.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_R_calculate.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_R_lights.cpp" />
+    <ClCompile Include="..\xrRender_R2\r2_R_render.cpp" />
     <ClCompile Include="gl_rendertarget_accum_direct.cpp" />
-    <ClCompile Include="gl_rendertarget_accum_omnipart_geom.cpp" />
     <ClCompile Include="gl_rendertarget_accum_point.cpp" />
-    <ClCompile Include="gl_rendertarget_accum_point_geom.cpp" />
-    <ClCompile Include="gl_rendertarget_accum_reflected.cpp" />
     <ClCompile Include="gl_rendertarget_accum_spot.cpp" />
-    <ClCompile Include="gl_rendertarget_accum_spot_geom.cpp" />
+    <ClCompile Include="gl_rendertarget_build_textures.cpp" />
     <ClCompile Include="gl_rendertarget_create_minmaxSM.cpp" />
     <ClCompile Include="gl_rendertarget_draw_rain.cpp" />
-    <ClCompile Include="gl_rendertarget_draw_volume.cpp" />
-    <ClCompile Include="gl_rendertarget_enable_scissor.cpp" />
     <ClCompile Include="gl_rendertarget_mark_msaa_edges.cpp" />
-    <ClCompile Include="gl_rendertarget_phase_accumulator.cpp" />
-    <ClCompile Include="gl_rendertarget_phase_bloom.cpp" />
     <ClCompile Include="gl_rendertarget_phase_combine.cpp" />
     <ClCompile Include="gl_rendertarget_phase_flip.cpp" />
-    <ClCompile Include="gl_rendertarget_phase_luminance.cpp" />
     <ClCompile Include="gl_rendertarget_phase_occq.cpp" />
-    <ClCompile Include="gl_rendertarget_phase_PP.cpp" />
     <ClCompile Include="gl_rendertarget_phase_rain.cpp" />
     <ClCompile Include="gl_rendertarget_phase_scene.cpp" />
     <ClCompile Include="gl_rendertarget_phase_smap_D.cpp" />
-    <ClCompile Include="gl_rendertarget_phase_smap_S.cpp" />
     <ClCompile Include="gl_rendertarget_phase_ssao.cpp" />
-    <ClCompile Include="r2_blenders.cpp" />
     <ClCompile Include="..\xrRender\Animation.cpp" />
     <ClCompile Include="..\xrRender\Blender.cpp" />
-    <ClCompile Include="..\xrRender\Blender_Palette.cpp" />
     <ClCompile Include="..\xrRender\Blender_Recorder.cpp" />
-    <ClCompile Include="..\xrRender\blenders\Blender_BmmD.cpp" />
-    <ClCompile Include="..\xrRender\blenders\Blender_detail_still.cpp" />
     <ClCompile Include="..\xrRender\blenders\Blender_Editor_Selection.cpp" />
     <ClCompile Include="..\xrRender\blenders\Blender_Editor_Wire.cpp" />
     <ClCompile Include="..\xrRender\blenders\Blender_Lm(EbB).cpp" />
-    <ClCompile Include="..\xrRender\blenders\Blender_Model_EbB.cpp" />
-    <ClCompile Include="..\xrRender\blenders\Blender_Particle.cpp" />
     <ClCompile Include="..\xrRender\Blender_Recorder_R2.cpp" />
     <ClCompile Include="..\xrRender\Blender_Recorder_StandartBinding.cpp" />
     <ClCompile Include="..\xrRender\blenders\Blender_Screen_SET.cpp" />
-    <ClCompile Include="..\xrRender\blenders\Blender_tree.cpp" />
     <ClCompile Include="..\xrRender\DetailManager.cpp" />
     <ClCompile Include="..\xrRender\DetailManager_CACHE.cpp" />
     <ClCompile Include="..\xrRender\DetailManager_Decompress.cpp" />
@@ -318,15 +198,10 @@
     <ClCompile Include="glResourceManager_Scripting.cpp" />
     <ClCompile Include="glr_constants.cpp" />
     <ClCompile Include="glTexture.cpp" />
-    <ClCompile Include="gl_R_render.cpp" />
-    <ClCompile Include="r2_R_calculate.cpp" />
-    <ClCompile Include="gl_rendertarget.cpp" />
-    <ClCompile Include="r2_R_lights.cpp" />
+    <ClCompile Include="gl_rendertarget_u_set_rt.cpp" />
     <ClCompile Include="r2_R_sun.cpp" />
-    <ClCompile Include="r2_sector_detect.cpp" />
+    <ClCompile Include="r2_test_hw.cpp" />
     <ClCompile Include="r3_R_rain.cpp" />
-    <ClCompile Include="r3_R_sun_support.cpp" />
-    <ClCompile Include="rgl.cpp" />
     <ClCompile Include="rgl_shaders.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
@@ -400,6 +275,7 @@
     <ClInclude Include="..\xrRender\Light_Render_Direct.h" />
     <ClInclude Include="..\xrRender\ModelPool.h" />
     <ClInclude Include="..\xrRender\r_sun_cascades.h" />
+    <ClInclude Include="..\xrRender\r__dsgraph_structure.h" />
     <ClInclude Include="..\xrRender\r__pixel_calculator.h" />
     <ClInclude Include="..\xrRender\blenders\blender_bloom_build.h" />
     <ClInclude Include="..\xrRender\blenders\blender_combine.h" />
@@ -460,6 +336,7 @@
     <ClInclude Include="..\xrRender\r__dsgraph_types.h" />
     <ClInclude Include="..\xrRender\r__occlusion.h" />
     <ClInclude Include="..\xrRender\r__sector.h" />
+    <ClInclude Include="..\xrRender\r__sync_point.h" />
     <ClInclude Include="..\xrRender\Shader.h" />
     <ClInclude Include="..\xrRender\SH_Atomic.h" />
     <ClInclude Include="..\xrRender\SH_Constant.h" />
@@ -475,12 +352,12 @@
     <ClInclude Include="..\xrRender\blenders\uber_deffer.h" />
     <ClInclude Include="..\xrRender\WallmarksEngine.h" />
     <ClInclude Include="..\xrRender\xrRender_console.h" />
-    <ClInclude Include="gl_rendertarget_wallmarks.h" />
-    <ClInclude Include="r2_types.h" />
+    <ClInclude Include="..\xrRender_R2\r2_rendertarget_wallmarks.h" />
+    <ClInclude Include="..\xrRender_R2\r2_R_sun_support.h" />
+    <ClInclude Include="..\xrRender_R2\r2_types.h" />
+    <ClInclude Include="..\xrRender_R2\SMAP_Allocator.h" />
     <ClInclude Include="gl_rendertarget.h" />
-    <ClInclude Include="r3_R_sun_support.h" />
     <ClInclude Include="rgl.h" />
-    <ClInclude Include="SMAP_Allocator.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -516,21 +393,21 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <Natvis Include="..\..\OpenXRay.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <Natvis Include="..\..\OpenXRay.natvis" />
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets" Condition="Exists('..\..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets')" />
-    <Import Project="..\..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets" Condition="Exists('..\..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets')" />
+    <Import Project="..\..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets" Condition="Exists('..\..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets')" />
+    <Import Project="..\..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets" Condition="Exists('..\..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>Данный проект ссылается на пакеты NuGet, отсутствующие на этом компьютере. Используйте восстановление пакетов NuGet, чтобы скачать их.  Дополнительную информацию см. по адресу: http://go.microsoft.com/fwlink/?LinkID=322105. Отсутствует следующий файл: {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\sdl2.nuget.redist.2.0.10\build\native\sdl2.nuget.redist.targets'))" />
-    <Error Condition="!Exists('..\..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\sdl2.nuget.2.0.10\build\native\sdl2.nuget.targets'))" />
+    <Error Condition="!Exists('..\..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\sdl2.nuget.redist.2.0.14\build\native\sdl2.nuget.redist.targets'))" />
+    <Error Condition="!Exists('..\..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\sdl2.nuget.2.0.14\build\native\sdl2.nuget.targets'))" />
   </Target>
 </Project>

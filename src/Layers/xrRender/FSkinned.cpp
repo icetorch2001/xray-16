@@ -8,6 +8,13 @@
 #include "xrEngine/EnnumerateVertices.h"
 #include "xrCore/xrDebug_macros.h"
 
+// XXX: test the parallel code in the load_hw()
+//#define PARALLEL_BONE_VERTICES_PROCESSING
+
+#ifdef PARALLEL_BONE_VERTICES_PROCESSING
+#include <xrCore/Threading/ParallelFor.hpp>
+#endif
+
 #ifdef DEBUG
 #include "xrCore/dump_string.h"
 #endif
@@ -68,7 +75,7 @@ void CSkeletonX_ST::Load(const char* N, IReader* data, u32 dwFlags)
 }
 
 template <typename T>
-ICF void set_vertice_hw(vertHW_1W<T>* dst, vertBoned1W* src)
+ICF void set_vertice_hw(vertHW_1W<T>* dst, const vertBoned1W* src)
 {
     Fvector2 uv;
     uv.set(src->u, src->v);
@@ -76,7 +83,7 @@ ICF void set_vertice_hw(vertHW_1W<T>* dst, vertBoned1W* src)
 }
 
 template <typename T>
-ICF void set_vertice_hw(vertHW_2W<T>* dst, vertBoned2W* src)
+ICF void set_vertice_hw(vertHW_2W<T>* dst, const vertBoned2W* src)
 {
     Fvector2 uv;
     uv.set(src->u, src->v);
@@ -84,7 +91,7 @@ ICF void set_vertice_hw(vertHW_2W<T>* dst, vertBoned2W* src)
 }
 
 template <typename T>
-ICF void set_vertice_hw(vertHW_3W<T>* dst, vertBoned3W* src)
+ICF void set_vertice_hw(vertHW_3W<T>* dst, const vertBoned3W* src)
 {
     Fvector2 uv;
     uv.set(src->u, src->v);
@@ -94,7 +101,7 @@ ICF void set_vertice_hw(vertHW_3W<T>* dst, vertBoned3W* src)
 }
 
 template <typename T>
-ICF void set_vertice_hw(vertHW_4W<T>* dst, vertBoned4W* src)
+ICF void set_vertice_hw(vertHW_4W<T>* dst, const vertBoned4W* src)
 {
     Fvector2 uv;
     uv.set(src->u, src->v);
@@ -103,8 +110,13 @@ ICF void set_vertice_hw(vertHW_4W<T>* dst, vertBoned4W* src)
         int(src->m[3]) * 3, src->w[0], src->w[1], src->w[2]);
 }
 
+// If vertex count is bigger than this value,
+// then it's reasonable to process vertices in parallel
+// XXX: determine value dynamically, it should be different for different CPUs
+constexpr auto PARALLEL_BONE_VERTICES_PROCESSING_MIN_VERTICES = 10000; // XXX: rough value
+
 template <typename TDst, typename TSrc>
-void load_hw(Fvisual& V, TSrc* src)
+void load_hw(Fvisual& V, const TSrc* src)
 {
     V.vStride = GetDeclVertexSize(get_decl<TDst>(), 0);
     VERIFY(nullptr == V.p_rm_Vertices);
@@ -114,11 +126,37 @@ void load_hw(Fvisual& V, TSrc* src)
 
     TDst* dst = static_cast<TDst*>(V.p_rm_Vertices->Map());
 
-    for (u32 it = 0; it < V.vCount; it++)
+    // XXX: install some Ultra HD models pack and test the parallel code
+    // For the original game models parallel code is always slower...
+    // But I don't want to enable untested code.
+#ifdef PARALLEL_BONE_VERTICES_PROCESSING
+    if (V.vCount > PARALLEL_BONE_VERTICES_PROCESSING_MIN_VERTICES)
     {
-        set_vertice_hw(dst, src);
-        dst++;
-        src++;
+        using range_value_type = decltype(Fvisual::vCount);
+        auto setVertices = [dst, src](TaskRange<range_value_type> range)
+        {
+            const TSrc* src2 = &src[range.begin()];
+            TDst* dst2 = &dst[range.begin()];
+            TDst* dst2End = &dst[range.end()];
+            while (dst2 != dst2End)
+            {
+                set_vertice_hw(dst2, src2);
+                dst2++;
+                src2++;
+            }
+        };
+        TaskRange<range_value_type> range(0, V.vCount);
+        xr_parallel_for(range, setVertices);
+    }
+    else
+#endif
+    {
+        for (u32 it = 0; it < V.vCount; it++)
+        {
+            set_vertice_hw(dst, src);
+            dst++;
+            src++;
+        }
     }
     V.p_rm_Vertices->Unmap(true); // upload vertex data
     V.rm_geom.create(get_decl<TDst>(), *V.p_rm_Vertices, *V.p_rm_Indices);
@@ -393,7 +431,7 @@ template <typename T>
 BOOL pick_bone(CKinematics* Parent, IKinematics::pick_result& r, float dist, const Fvector& S, const Fvector& D,
     Fvisual* V, u16* indices, CBoneData::FacesVec& faces)
 {
-    void* data = static_cast<BYTE*>(V->p_rm_Vertices->Map(V->vBase, V->vCount * V->vStride, true)); // read-back
+    void* data = static_cast<u8*>(V->p_rm_Vertices->Map(V->vBase, V->vCount * V->vStride, true)); // read-back
     T* vertices = static_cast<T*>(data);
     const bool intersect = pick_bone<T, T*>(vertices, Parent, r, dist, S, D, indices, faces);
     V->p_rm_Vertices->Unmap();

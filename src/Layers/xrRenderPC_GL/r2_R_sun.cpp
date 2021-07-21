@@ -1,13 +1,15 @@
 #include "stdafx.h"
+
+#include "r2_R_sun_support.h"
+
 #include "xrEngine/IGame_Persistent.h"
 #include "xrEngine/IRenderable.h"
 #include "Layers/xrRender/FBasicVisual.h"
-#include "r3_R_sun_support.h"
+
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/matrix_access.hpp"
-
 
 const float tweak_COP_initial_offs = 1200.f;
 const float tweak_ortho_xform_initial_offs = 1000.f; //. ?
@@ -36,7 +38,7 @@ static int facetable[6][4] = {
 };
 //////////////////////////////////////////////////////////////////////////
 #define DW_AS_FLT(DW) (*(FLOAT*)&(DW))
-#define FLT_AS_DW(F) (*(DWORD*)&(F))
+#define FLT_AS_DW(F) (*(u32*)&(F))
 #define FLT_SIGN(F) ((FLT_AS_DW(F) & 0x80000000L))
 #define ALMOST_ZERO(F) ((FLT_AS_DW(F) & 0x7f800000L)==0)
 #define IS_SPECIAL(F) ((FLT_AS_DW(F) & 0x7f800000L)==0x7f800000L)
@@ -85,7 +87,7 @@ struct BoundingBox
     BoundingBox(): minPt(1e33f, 1e33f, 1e33f), maxPt(-1e33f, -1e33f, -1e33f) { }
     BoundingBox(const BoundingBox& other): minPt(other.minPt), maxPt(other.maxPt) { }
 
-    explicit BoundingBox(const glm::vec3* points, UINT n): minPt(1e33f, 1e33f, 1e33f), maxPt(-1e33f, -1e33f, -1e33f)
+    explicit BoundingBox(const glm::vec3* points, u32 n): minPt(1e33f, 1e33f, 1e33f), maxPt(-1e33f, -1e33f, -1e33f)
     {
         for (unsigned int i = 0; i < n; i++)
             Merge(&points[i]);
@@ -1053,7 +1055,7 @@ void CRender::init_cacades()
     float fBias = -0.0000025f;
     //	float size = MAP_SIZE_START;
     m_sun_cascades[0].reset_chain = true;
-    m_sun_cascades[0].size = 9;
+    m_sun_cascades[0].size = 20;
     m_sun_cascades[0].bias = m_sun_cascades[0].size * fBias;
 
     m_sun_cascades[1].size = 40;
@@ -1191,7 +1193,7 @@ void CRender::render_sun_cascade(u32 cascade_ind)
 
         float map_size = m_sun_cascades[cascade_ind].size;
         XRMatrixOrthoOffCenterLH(&mdir_Project, -map_size * 0.5f, map_size * 0.5f, -map_size * 0.5f,
-                                   map_size * 0.5f, 0.1, dist + /*sqrt(2)*/1.41421f * map_size);
+                                   map_size * 0.5f, 0.1f, dist + /*sqrt(2)*/1.41421f * map_size);
 
         //////////////////////////////////////////////////////////////////////////
 

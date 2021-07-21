@@ -8,10 +8,12 @@
 
 #pragma warning(push)
 #pragma warning(disable : 4995)
-#if defined(XR_ARCHITECTURE_X86) || defined(XR_ARCHITECTURE_X64)
+#if defined(XR_ARCHITECTURE_X86) || defined(XR_ARCHITECTURE_X64) || defined(XR_ARCHITECTURE_E2K)
 #include <xmmintrin.h>
 #elif defined(XR_ARCHITECTURE_ARM) || defined(XR_ARCHITECTURE_ARM64)
-#include "Externals/sse2neon/sse2neon.h"
+#include "sse2neon/sse2neon.h"
+#else
+#error Add your platform here
 #endif
 #pragma warning(pop)
 
@@ -38,11 +40,11 @@ struct ray_segment_t
 };
 
 ICF u32& uf(float& x) { return (u32&)x; }
-ICF BOOL isect_fpu(const Fvector& min, const Fvector& max, const ray_t& ray, Fvector& coord)
+ICF bool isect_fpu(const Fvector& min, const Fvector& max, const ray_t& ray, Fvector& coord)
 {
     Fvector MaxT;
     MaxT.x = MaxT.y = MaxT.z = -1.0f;
-    BOOL Inside = TRUE;
+    bool Inside = true;
 
     // Find candidate planes.
     if (ray.pos[0] < min[0])
@@ -155,7 +157,7 @@ static constexpr auto flt_plus_inf = std::numeric_limits<float>::infinity();
 alignas(16) static constexpr float ps_cst_plus_inf[4] = { flt_plus_inf, flt_plus_inf, flt_plus_inf, flt_plus_inf },
                                    ps_cst_minus_inf[4] = { -flt_plus_inf, -flt_plus_inf, -flt_plus_inf, -flt_plus_inf };
 
-ICF BOOL isect_sse(const aabb_t& box, const ray_t& ray, float& dist)
+ICF bool isect_sse(const aabb_t& box, const ray_t& ray, float& dist)
 {
     // you may already have those values hanging around somewhere
     const __m128 plus_inf = loadps(ps_cst_plus_inf), minus_inf = loadps(ps_cst_minus_inf);
@@ -192,7 +194,7 @@ ICF BOOL isect_sse(const aabb_t& box, const ray_t& ray, float& dist)
     lmax = minss(lmax, lmax1);
     lmin = maxss(lmin, lmin1);
 
-    const BOOL ret = _mm_comige_ss(lmax, _mm_setzero_ps()) & _mm_comige_ss(lmax, lmin);
+    const bool ret = _mm_comige_ss(lmax, _mm_setzero_ps()) & _mm_comige_ss(lmax, lmin);
 
     storess(lmin, &dist);
     // storess	(lmax, &rs.t_far);
@@ -243,7 +245,7 @@ public:
         space = _space;
     }
     // fpu
-    ICF BOOL _box_fpu(const Fvector& n_C, const float n_R, Fvector& coord)
+    ICF bool _box_fpu(const Fvector& n_C, const float n_R, Fvector& coord)
     {
         // box
         float n_vR = 2 * n_R;
@@ -252,7 +254,7 @@ public:
         return isect_fpu(BB.vMin, BB.vMax, ray, coord);
     }
     // sse
-    ICF BOOL _box_sse(const Fvector& n_C, const float n_R, float& dist)
+    ICF bool _box_sse(const Fvector& n_C, const float n_R, float& dist)
     {
         aabb_t box;
         /*
@@ -343,7 +345,7 @@ void ISpatial_DB::q_ray(
     Stats.Query.Begin();
     q_result = &R;
     q_result->clear();
-    if (SDL_HasSSE())
+    if (CPU::ID.hasFeature(CpuFeature::SSE))
     {
         if (_o & O_ONLYFIRST)
         {

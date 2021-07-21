@@ -50,7 +50,6 @@ CUIMapWnd::~CUIMapWnd()
 {
     delete_data(m_ActionPlanner);
     delete_data(m_GameMaps);
-    delete_data(m_map_location_hint);
     /*
     #ifdef DEBUG
         delete_data( m_dbg_text_hint );
@@ -146,10 +145,14 @@ bool CUIMapWnd::Init(cpcstr xml_name, cpcstr start_from, bool critical /*= true*
         AddCallback(m_UIMainScrollV, SCROLLBAR_VSCROLL, CUIWndCallback::void_function(this, &CUIMapWnd::OnScrollV));
     }
 
+    init_xml_nav(uiXml);
+
     m_map_location_hint = xr_new<CUIMapLocationHint>();
+    m_map_location_hint->SetCustomDraw(true);
+    m_map_location_hint->SetAutoDelete(true);
+    AttachChild(m_map_location_hint);
     strconcat(sizeof(pth), pth, start_from, ":map_hint_item");
     m_map_location_hint->Init(uiXml, pth);
-    m_map_location_hint->SetAutoDelete(false);
 
     // Load maps
 
@@ -161,8 +164,6 @@ bool CUIMapWnd::Init(cpcstr xml_name, cpcstr start_from, bool critical /*= true*
     m_GlobalMap->OptimalFit(m_UILevelFrame->GetWndRect());
     m_GlobalMap->SetMinZoom(m_GlobalMap->GetCurrentZoom().x);
     m_currentZoom = m_GlobalMap->GetCurrentZoom().x;
-
-    init_xml_nav(uiXml);
 
     // initialize local maps
     xr_string sect_name;
@@ -385,12 +386,12 @@ void CUIMapWnd::DrawHint()
         {
             if (ms->MapLocation() && ms->MapLocation()->HintEnabled())
             {
-                m_map_location_hint->Draw_();
+                m_map_location_hint->Draw();
             }
         }
         else
         {
-            m_map_location_hint->Draw_();
+            m_map_location_hint->Draw();
         }
     }
 }

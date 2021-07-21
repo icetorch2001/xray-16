@@ -27,6 +27,7 @@
 #include "Render.h"
 #include "SDL.h"
 
+class Task;
 class engine_impl;
 
 #pragma pack(push, 4)
@@ -187,7 +188,8 @@ public:
     Fmatrix mInvFullTransform;
 
     CRenderDevice()
-        : fWidth_2(0), fHeight_2(0), mtProcessingAllowed(false),
+        : dwPrecacheTotal(0), fWidth_2(0), fHeight_2(0),
+          mt_bMustExit(false),
           m_editor_module(nullptr), m_editor_initialize(nullptr),
           m_editor_finalize(nullptr), m_editor(nullptr)
     {
@@ -202,9 +204,7 @@ public:
     bool Paused();
 
 private:
-    static void PrimaryThreadProc(void* context);
-    static void SecondaryThreadProc(void* context);
-    static void RenderThreadProc(void* context);
+    void xr_stdcall ProcessParallelSequence(Task&, void*);
 
 public:
     // Scene control
@@ -267,19 +267,9 @@ public:
         return (Timer.time_factor());
     }
 
-private:
-    std::atomic<bool> mtProcessingAllowed;
-    Event syncProcessFrame, syncFrameDone, syncThreadExit; // Secondary thread events
-    Event renderProcessFrame, renderFrameDone, renderThreadExit; // Render thread events
-
 public:
     Event PresentationFinished = nullptr;
     volatile bool mt_bMustExit;
-
-    bool IsMTProcessingAllowed() const
-    {
-        return mtProcessingAllowed;
-    }
 
     // Usable only when called from thread, that initialized SDL
     // Calls SDL_PumpEvents() at least twice.

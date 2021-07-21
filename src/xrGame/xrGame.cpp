@@ -15,68 +15,42 @@
 extern void FillUIStyleToken();
 extern void CleanupUIStyleToken();
 
-extern "C" {
-DLL_API IFactoryObject* __cdecl xrFactory_Create(CLASS_ID clsid)
-{
-    IFactoryObject* object = object_factory().client_object(clsid);
-#ifdef DEBUG
-    if (!object)
-        return (0);
-#endif
-    // XXX nitrocaster XRFACTORY: set clsid during factory initialization
-    object->GetClassId() = clsid;
-    return (object);
-}
-
-DLL_API void __cdecl xrFactory_Destroy(IFactoryObject* O) { xr_delete(O); }
-};
-
 void CCC_RegisterCommands();
 
-#ifdef XR_PLATFORM_LINUX
-__attribute__((constructor))
-#endif
-static void load(int argc, char** argv, char** envp)
+extern "C"
 {
-    // Fill ui style token
-    FillUIStyleToken();
-    // register console commands
-    CCC_RegisterCommands();
-    // keyboard binding
-    CCC_RegisterInput();
+    XR_EXPORT IFactoryObject* __cdecl xrFactory_Create(CLASS_ID clsid)
+    {
+        IFactoryObject* object = object_factory().client_object(clsid);
 #ifdef DEBUG
-    g_profiler = xr_new<CProfiler>();
+        if (!object)
+            return (0);
 #endif
-    gStringTable = xr_new<CStringTable>();
-    StringTable().Init();
-}
-
-#ifdef XR_PLATFORM_LINUX
-__attribute__((destructor))
-#endif
-static void unload()
-{
-    CleanupUIStyleToken();
-    xr_delete(gStringTable);
-}
-
-#ifdef XR_PLATFORM_WINDOWS
-BOOL APIENTRY DllMain(HANDLE hModule, u32 ul_reason_for_call, LPVOID lpReserved)
-{
-    switch (ul_reason_for_call)
-    {
-    case DLL_PROCESS_ATTACH:
-    {
-        load(0, nullptr, nullptr);
-        break;
+        // XXX nitrocaster XRFACTORY: set clsid during factory initialization
+        object->GetClassId() = clsid;
+        return (object);
     }
 
-    case DLL_PROCESS_DETACH:
+    XR_EXPORT void __cdecl xrFactory_Destroy(IFactoryObject* O) { xr_delete(O); }
+
+    XR_EXPORT void initialize_library()
     {
-        unload();
-        break;
-    }
-    }
-    return (TRUE);
-}
+        // Fill ui style token
+        FillUIStyleToken();
+        // register console commands
+        CCC_RegisterCommands();
+        // keyboard binding
+        CCC_RegisterInput();
+#ifdef DEBUG
+        g_profiler = xr_new<CProfiler>();
 #endif
+        gStringTable = xr_new<CStringTable>();
+        StringTable().Init();
+    }
+
+    XR_EXPORT void finalize_library()
+    {
+        CleanupUIStyleToken();
+        xr_delete(gStringTable);
+    }
+}

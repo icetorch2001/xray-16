@@ -4,84 +4,64 @@
 #include "Layers/xrRender/dxDebugRender.h"
 #include "Layers/xrRender/D3DUtils.h"
 
-class sdl_window_test_helper
+constexpr pcstr RENDERER_RGL_MODE = "renderer_rgl";
+
+class RGLRendererModule final : public RendererModule
 {
-    SDL_Window* m_window = nullptr;
-    SDL_GLContext m_context = nullptr;
+    xr_vector<pcstr> modes;
 
 public:
-    sdl_window_test_helper()
+    bool CheckCanAddMode() const
     {
-        HW.SetPrimaryAttributes();
-        m_window = SDL_CreateWindow("TestOpenGLWindow", 0, 0, 1, 1, SDL_WINDOW_HIDDEN | SDL_WINDOW_OPENGL);
-        if (!m_window)
+        // don't duplicate
+        if (!modes.empty())
         {
-            Log("~ Cannot create helper window for OpenGL:", SDL_GetError());
-            return;
+            return false;
         }
-
-        m_context = SDL_GL_CreateContext(m_window);
-        if (!m_context)
+        // Check if shaders are available
+        if (!FS.exist("$game_shaders$", RImplementation.getShaderPath()))
         {
-            Log("~ Cannot create OpenGL context:", SDL_GetError());
-            return;
+            Log("~ No shaders found for OpenGL");
+            return false;
         }
+        return xrRender_test_hw();
     }
 
-    bool successful() const
+    const xr_vector<pcstr>& ObtainSupportedModes() override
     {
-        return m_window && m_context;
+        if (CheckCanAddMode())
+        {
+            modes.emplace_back(RENDERER_RGL_MODE);
+        }
+        return modes;
     }
 
-    ~sdl_window_test_helper()
+    void CheckModeConsistency(pcstr mode) const
     {
-        SDL_GL_DeleteContext(m_context);
-        SDL_DestroyWindow(m_window);
+        R_ASSERT3(0 == xr_strcmp(mode, RENDERER_RGL_MODE),
+            "Wrong mode passed to xrRender_GL", mode);
     }
-};
+
+    void SetupEnv(pcstr mode) override
+    {
+        CheckModeConsistency(mode);
+        ps_r2_sun_static = false;
+        ps_r2_advanced_pp = true;
+        GEnv.Render = &RImplementation;
+        GEnv.RenderFactory = &RenderFactoryImpl;
+        GEnv.DU = &DUImpl;
+        GEnv.UIRender = &UIRenderImpl;
+#ifdef DEBUG
+        GEnv.DRender = &DebugRenderImpl;
+#endif
+        xrRender_initconsole();
+    }
+} static s_rgl_module;
 
 extern "C"
 {
-XR_EXPORT void SetupEnv()
+XR_EXPORT RendererModule* GetRendererModule()
 {
-    GEnv.Render = &RImplementation;
-    GEnv.RenderFactory = &RenderFactoryImpl;
-    GEnv.DU = &DUImpl;
-    GEnv.UIRender = &UIRenderImpl;
-#ifdef DEBUG
-    GEnv.DRender = &DebugRenderImpl;
-#endif
-    xrRender_initconsole();
+    return &s_rgl_module;
 }
-
-XR_EXPORT bool CheckRendererSupport()
-{
-    // XXX: this check should be removed after implementing support for HLSL
-    // https://github.com/OpenXRay/xray-16/issues/258
-    // Check if shaders are available
-    if (!FS.exist("$game_shaders$", RImplementation.getShaderPath()))
-    {
-        Log("~ No shaders found for OpenGL");
-        return false;
-    }
-
-    // Check if minimal required OpenGL features are available
-    const sdl_window_test_helper windowTest;
-    if (!windowTest.successful())
-        return false;
-
-    if (glewInit() != GLEW_OK)
-    {
-        Log("~ Could not initialize glew.");
-        return false;
-    }
-
-    if (!glewIsSupported("GL_ARB_separate_shader_objects"))
-    {
-        Log("~ GL_ARB_separate_shader_objects not supported");
-        return false;
-    }
-
-    return true;
 }
-} // extern "C"

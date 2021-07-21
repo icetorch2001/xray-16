@@ -5,7 +5,7 @@
 #include "stdafx.h"
 #pragma hdrstop
 
-#include <tbb/parallel_for_each.h>
+#include "xrCore/Threading/ParallelForEach.hpp"
 
 #include "ResourceManager.h"
 #include "tss.h"
@@ -13,7 +13,7 @@
 #include "Blender_Recorder.h"
 
 //	Already defined in Texture.cpp
-void fix_texture_name(LPSTR fn);
+void fix_texture_name(pstr fn);
 /*
 void fix_texture_name(LPSTR fn)
 {
@@ -46,7 +46,7 @@ IBlender* CResourceManager::_GetBlender(LPCSTR Name)
 {
     R_ASSERT(Name && Name[0]);
 
-    LPSTR N = LPSTR(Name);
+    pstr N = pstr(Name);
     map_Blender::iterator I = m_blenders.find(N);
 
     if (I == m_blenders.end())
@@ -63,7 +63,7 @@ IBlender* CResourceManager::_FindBlender(LPCSTR Name)
     if (!(Name && Name[0]))
         return nullptr;
 
-    LPSTR N = LPSTR(Name);
+    pstr N = pstr(Name);
     map_Blender::iterator I = m_blenders.find(N);
     if (I == m_blenders.end())
         return nullptr;
@@ -73,7 +73,7 @@ IBlender* CResourceManager::_FindBlender(LPCSTR Name)
 
 void CResourceManager::ED_UpdateBlender(LPCSTR Name, IBlender* data)
 {
-    LPSTR N = LPSTR(Name);
+    pstr N = pstr(Name);
     map_Blender::iterator I = m_blenders.find(N);
     if (I != m_blenders.end())
     {
@@ -130,7 +130,7 @@ void CResourceManager::_ParseList(sh_list& dest, LPCSTR names)
     }
 }
 
-ShaderElement* CResourceManager::_CreateElement(ShaderElement& S)
+ShaderElement* CResourceManager::_CreateElement(ShaderElement&& S)
 {
     if (S.passes.empty())
         return nullptr;
@@ -141,7 +141,7 @@ ShaderElement* CResourceManager::_CreateElement(ShaderElement& S)
             return v_elements[it];
 
     // Create _new_ entry
-    ShaderElement* N = v_elements.emplace_back(xr_new<ShaderElement>(S));
+    ShaderElement* N = v_elements.emplace_back(xr_new<ShaderElement>(std::move(S)));
     N->dwFlags |= xr_resource_flagged::RF_REGISTERED;
     return N;
 }
@@ -190,7 +190,7 @@ Shader* CResourceManager::_cpp_Create(
         C.bDetail = m_textures_description.GetDetailTexture(C.L_textures[0], C.detail_texture, C.detail_scaler);
         ShaderElement E;
         C._cpp_Compile(&E);
-        S.E[SE_R1_NORMAL_HQ] = _CreateElement(E);
+        S.E[SE_R1_NORMAL_HQ] = _CreateElement(std::move(E));
     }
 
     // Compile element	(LOD1)
@@ -199,7 +199,7 @@ Shader* CResourceManager::_cpp_Create(
         C.bDetail = m_textures_description.GetDetailTexture(C.L_textures[0], C.detail_texture, C.detail_scaler);
         ShaderElement E;
         C._cpp_Compile(&E);
-        S.E[SE_R1_NORMAL_LQ] = _CreateElement(E);
+        S.E[SE_R1_NORMAL_LQ] = _CreateElement(std::move(E));
     }
 
     // Compile element
@@ -208,7 +208,7 @@ Shader* CResourceManager::_cpp_Create(
         C.bDetail = m_textures_description.GetDetailTexture(C.L_textures[0], C.detail_texture, C.detail_scaler);
         ShaderElement E;
         C._cpp_Compile(&E);
-        S.E[SE_R1_LPOINT] = _CreateElement(E);
+        S.E[SE_R1_LPOINT] = _CreateElement(std::move(E));
     }
 
     // Compile element
@@ -217,7 +217,7 @@ Shader* CResourceManager::_cpp_Create(
         C.bDetail = m_textures_description.GetDetailTexture(C.L_textures[0], C.detail_texture, C.detail_scaler);
         ShaderElement E;
         C._cpp_Compile(&E);
-        S.E[SE_R1_LSPOT] = _CreateElement(E);
+        S.E[SE_R1_LSPOT] = _CreateElement(std::move(E));
     }
 
     // Compile element
@@ -226,7 +226,7 @@ Shader* CResourceManager::_cpp_Create(
         C.bDetail = TRUE; //.$$$ HACK :)
         ShaderElement E;
         C._cpp_Compile(&E);
-        S.E[SE_R1_LMODELS] = _CreateElement(E);
+        S.E[SE_R1_LMODELS] = _CreateElement(std::move(E));
     }
 
     // Compile element
@@ -235,7 +235,7 @@ Shader* CResourceManager::_cpp_Create(
         C.bDetail = FALSE;
         ShaderElement E;
         C._cpp_Compile(&E);
-        S.E[5] = _CreateElement(E);
+        S.E[5] = _CreateElement(std::move(E));
     }
 
     // Search equal in shaders array
@@ -244,7 +244,7 @@ Shader* CResourceManager::_cpp_Create(
             return v_shaders[it];
 
     // Create _new_ entry
-    Shader* N = v_shaders.emplace_back(xr_new<Shader>(S));
+    Shader* N = v_shaders.emplace_back(xr_new<Shader>(std::move(S)));
     N->dwFlags |= xr_resource_flagged::RF_REGISTERED;
     return N;
 }
@@ -277,76 +277,41 @@ void CResourceManager::CompatibilityCheck()
     {
         IReader* skinh = open_shader("skin.h");
         R_ASSERT3(skinh, "Can't open shader", "skin.h");
-        // search for (12.f / 32768.f)
+        xr_string str(static_cast<pcstr>(skinh->pointer()), skinh->length());
+
         bool hq_skinning = true;
-        do
+        // search for (12.f / 32768.f)
+        const auto check = [&](cpcstr searchBegin, cpcstr searchEnd) -> bool
         {
-            pcstr begin = strstr((cpcstr)skinh->pointer(), "u_position");
+            cpcstr begin = strstr(str.c_str(), searchBegin);
             if (!begin)
-                break;
+                return false;
 
-            cpcstr end = strstr(begin, "sbones_array");
+            cpcstr end = strstr(begin, searchEnd);
             if (!end)
-                break;
+                return false;
 
-            xr_string str(begin, end);
+            str.assign(begin, end);
             pcstr ptr = str.data();
 
-            if ((ptr = strstr(ptr, "12.f")))    // 12.f
+            if ((ptr = strstr(ptr, "12.")))     // 12.f or 12.0
+            {
                 if ((ptr = strstr(ptr, "/")))   // /
-                    if (strstr(ptr, "32768.f")) // 32768.f
+                    if (strstr(ptr, "32768."))  // 32768.f or 32768.0
+                    {
                         hq_skinning = false;    // found
-            break;
-        } while (false);
+                        return true;
+                    }
+            }
+            return false;
+        };
+        if (!check("u_position", "sbones_array"))
+        {
+            check("skinning_pos", "skinning_0");
+        }
         RImplementation.m_hq_skinning = hq_skinning;
         FS.r_close(skinh);
     }
-#if RENDER != R_R1
-    // Check shadow cascades type (old SOC/CS or new COP)
-    if (psDeviceFlags.test(rsR2))
-    {
-        // Check for new cascades support on R2
-        IReader* accumSunNearCascade = open_shader("accum_sun_near_cascade.ps");
-        RImplementation.o.oldshadowcascades = !accumSunNearCascade;
-        ps_r2_ls_flags_ext.set(R2FLAGEXT_SUN_OLD, !accumSunNearCascade);
-        FS.r_close(accumSunNearCascade);
-    }
-    else if (!psDeviceFlags.test(rsR1))
-    {
-        IReader* accumSunNear = open_shader("accum_sun_near.ps");
-        R_ASSERT3(accumSunNear, "Can't open shader", "accum_sun_near.ps");
-        bool oldCascades = false;
-        do
-        {
-            pcstr begin = strstr((cpcstr)accumSunNear->pointer(), "float4");
-            if (!begin)
-                break;
-
-            begin = strstr(begin, "main");
-            if (!begin)
-                break;
-
-            cpcstr end = strstr(begin, "SV_Target");
-            if (!end)
-                break;
-
-            xr_string str(begin, end);
-            pcstr ptr = str.data();
-
-            if (strstr(ptr, "v2p_TL2uv"))
-            {
-                oldCascades = true;
-            }
-            else if (strstr(ptr, "v2p_volume"))
-            {
-                oldCascades = false;
-            }
-        } while (false);
-        RImplementation.o.oldshadowcascades = oldCascades;
-        ps_r2_ls_flags_ext.set(R2FLAGEXT_SUN_OLD, oldCascades);
-        FS.r_close(accumSunNear);
-    }
-#endif
 }
 
 Shader* CResourceManager::Create(IBlender* B, LPCSTR s_shader, LPCSTR s_textures, LPCSTR s_constants, LPCSTR s_matrices)
@@ -361,8 +326,8 @@ Shader* CResourceManager::Create(LPCSTR s_shader, LPCSTR s_textures, LPCSTR s_co
 {
     if (!GEnv.isDedicatedServer)
     {
-//	TODO: DX10: When all shaders are ready switch to common path
-#if defined(USE_DX10) || defined(USE_DX11)
+        // TODO: DX10: When all shaders are ready switch to common path
+#ifdef USE_DX11
         if (_lua_HasShader(s_shader))
             return _lua_Create(s_shader, s_textures);
         else
@@ -381,14 +346,14 @@ Shader* CResourceManager::Create(LPCSTR s_shader, LPCSTR s_textures, LPCSTR s_co
                 }
             }
         }
-#else //	USE_DX10
+#else // USE_DX9
 #ifndef _EDITOR
         if (_lua_HasShader(s_shader))
             return _lua_Create(s_shader, s_textures);
         else
 #endif
             return _cpp_Create(s_shader, s_textures, s_constants, s_matrices);
-#endif //	USE_DX10
+#endif
     }
     return nullptr;
 }
@@ -408,7 +373,7 @@ void CResourceManager::DeferredUpload()
         return;
 
 #ifndef USE_OGL
-    tbb::parallel_for_each(m_textures, [&](auto m_tex) { m_tex.second->Load(); });
+    xr_parallel_for_each(m_textures, [&](auto m_tex) { m_tex.second->Load(); });
 #else
     for (auto& texture : m_textures)
         texture.second->Load();
@@ -421,7 +386,7 @@ void CResourceManager::DeferredUnload()
         return;
 
 #ifndef USE_OGL
-    tbb::parallel_for_each(m_textures, [&](auto m_tex) { m_tex.second->Unload(); });
+    xr_parallel_for_each(m_textures, [&](auto m_tex) { m_tex.second->Unload(); });
 #else
     for (auto& texture : m_textures)
         texture.second->Unload();
@@ -500,8 +465,8 @@ void CResourceManager::_DumpMemoryUsage()
 
 void CResourceManager::Evict()
 {
-//	TODO: DX10: check if we really need this method
-#if !defined(USE_DX10) && !defined(USE_DX11) && !defined(USE_OGL)
+    // TODO: DX10: check if we really need this method
+#ifdef USE_DX9
     CHK_DX(HW.pDevice->EvictManagedResources());
 #endif
 }

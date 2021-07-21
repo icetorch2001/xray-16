@@ -162,14 +162,14 @@ void CLightShadows::calculate()
         return;
 
     BOOL bRTS = FALSE;
-    HW.pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
+    RCache.set_Z(false);
 
     if (rt_size != ps_r2_smapsize / 2)
         recreate_rt();
 
     // iterate on objects
     int slot_id = 0;
-    int s_size = rt_size * ps_r2_ls_squality / (512 / 85);
+    int s_size = int(rt_size * ps_r2_ls_squality / (512 / 85));
     int slot_line = rt_size / s_size;
     int slot_max = slot_line * slot_line;
     const float eps = 2 * EPS_L;
@@ -198,7 +198,7 @@ void CLightShadows::calculate()
                 bRTS = TRUE;
                 RCache.set_RT(rt_temp->pRT);
                 RCache.set_ZB(RImplementation.Target->rt_temp_zb->pRT);
-                HW.pDevice->Clear(0, nullptr, D3DCLEAR_TARGET, color_xrgb(255, 255, 255), 1, 0);
+                RCache.ClearRT(rt_temp, { 1.0f, 1.0f, 1.0f, 1.0f });
             }
 
             // calculate light center
@@ -343,7 +343,7 @@ void CLightShadows::calculate()
     }
 
     // Finita la comedia
-    HW.pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_TRUE);
+    RCache.set_Z(true);
 
     RCache.set_xform_project(Device.mProject);
     RCache.set_xform_view(Device.mView);
@@ -415,7 +415,7 @@ void CLightShadows::render()
     CDB::TRI* TRIS = DB->get_tris();
     Fvector* VERTS = DB->get_verts();
 
-    int s_size = rt_size * ps_r2_ls_squality / (512 / 85);
+    int s_size = int(rt_size * ps_r2_ls_squality / (512 / 85));
     int slot_line = rt_size / s_size;
 
     // Projection and xform

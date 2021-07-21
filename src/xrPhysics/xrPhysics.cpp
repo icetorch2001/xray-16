@@ -13,32 +13,16 @@ static void* ode_alloc(size_t size) { return xr_malloc(size); }
 static void* ode_realloc(void* ptr, size_t oldsize, size_t newsize) { return xr_realloc(ptr, newsize); }
 static void ode_free(void* ptr, size_t size) { return xr_free(ptr); }
 
-#ifdef XR_PLATFORM_LINUX
-__attribute__((constructor))
-#endif
-static void load(int argc, char** argv, char** envp)
+class ode_memory_initializer final
 {
-    dSetAllocHandler(ode_alloc);
-    dSetReallocHandler(ode_realloc);
-    dSetFreeHandler(ode_free);
-}
-
-#if defined(XR_PLATFORM_WINDOWS)
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
-{
-    lpReserved;
-    switch (ul_reason_for_call)
+public:
+    ode_memory_initializer()
     {
-    case DLL_PROCESS_ATTACH:
-
-        load(0, nullptr, nullptr);
-
-        break;
-    case DLL_PROCESS_DETACH: break;
+        dSetAllocHandler(ode_alloc);
+        dSetReallocHandler(ode_realloc);
+        dSetFreeHandler(ode_free);
     }
-    return TRUE;
-}
-#endif //XR_PLATFORM_WINDOWS
+} static s_ode_memory_initializer;
 
 #ifdef _MANAGED
 #pragma managed(pop)

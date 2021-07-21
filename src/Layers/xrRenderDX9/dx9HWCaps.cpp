@@ -6,7 +6,6 @@
 
 #if !defined(_EDITOR)
 #include <nvapi.h>
-#include <ags_lib/inc/amd_ags.h>
 #endif
 
 namespace
@@ -68,25 +67,24 @@ u32 GetNVGpuNum()
 
 u32 GetATIGpuNum()
 {
-    AGSContext* ags = nullptr;
-    AGSGPUInfo gpuInfo = {};
-    AGSReturnCode status = agsInit(&ags, &gpuInfo);
-    if (status != AGS_SUCCESS)
-    {
-        Msg("* AGS: Initialization failed (%d)", status);
-        return 0;
-    }
-    int crossfireGpuCount = 1;
-    status = agsGetCrossfireGPUCount(ags, &crossfireGpuCount);
-    if (status != AGS_SUCCESS)
-    {
-        Msg("! AGS: Unable to get CrossFire GPU count (%d)", status);
-        agsDeInit(ags);
+    const auto atimgpud = XRay::LoadModule("ATIMGPUD.DLL");
+    if (!atimgpud->IsLoaded())
         return 1;
+
+    using ATIQUERYMGPUCOUNT = INT(*)();
+
+    const auto AtiQueryMgpuCount = (ATIQUERYMGPUCOUNT)atimgpud->GetProcAddress("AtiQueryMgpuCount");
+
+    if (!AtiQueryMgpuCount)
+        return 1;
+
+    const int iGpuNum = AtiQueryMgpuCount();
+    if (iGpuNum > 1)
+    {
+        Msg("* ATI MGPU: %d-Way CrossFire detected.", iGpuNum);
+        return iGpuNum;
     }
-    Msg("* AGS: CrossFire GPU count: %d", crossfireGpuCount);
-    agsDeInit(ags);
-    return crossfireGpuCount;
+    return 1;
 }
 
 u32 GetGpuNum()
@@ -122,8 +120,8 @@ void CHWCaps::Update()
     geometry.bSoftware = (caps.DevCaps & D3DDEVCAPS_HWTRANSFORMANDLIGHT) == 0;
     geometry.bPointSprites = FALSE;
     geometry.bNPatches = (caps.DevCaps & D3DDEVCAPS_NPATCHES) != 0;
-    DWORD cnt = (caps.MaxVertexShaderConst);
-    clamp<DWORD>(cnt, 0, 256);
+    u32 cnt = (caps.MaxVertexShaderConst);
+    clamp<u32>(cnt, 0, 256);
     geometry.dwRegisters = cnt;
     geometry.dwInstructions = 256;
     geometry.dwClipPlanes = _min(caps.MaxUserClipPlanes, 15);
@@ -218,4 +216,7 @@ void CHWCaps::Update()
     // DEV INFO
 
     iGPUNum = GetGpuNum();
+
+    hasFixedPipeline    = true;
+    useCombinedSamplers = true;
 }

@@ -18,19 +18,24 @@ public:
 
     void SetPrimaryAttributes();
 
+    IRender::RenderContext GetCurrentContext() const;
     int  MakeContextCurrent(IRender::RenderContext context) const;
 
-    std::pair<u32, u32> GetSurfaceSize() const;
+    static std::pair<u32, u32> GetSurfaceSize();
+    DeviceState GetDeviceState() const;
 
-    void UpdateViews();
-
-    // TODO: OGL: Implement this into a compatibility layer?
-    void ClearRenderTargetView(GLuint pRenderTargetView, const FLOAT ColorRGBA[4]);
-
-    void ClearDepthStencilView(GLuint pDepthStencilView, UINT ClearFlags, FLOAT Depth, UINT8 Stencil);
-
+public:
+    void BeginScene();
+    void EndScene();
     void Present();
-    DeviceState GetDeviceState();
+
+private:
+    void UpdateViews();
+    bool ThisInstanceIsGlobal() const;
+
+public:
+    void BeginPixEvent(pcstr name) const;
+    void EndPixEvent() const;
 
 public:
     CHWCaps Caps;
@@ -39,8 +44,6 @@ public:
     u32 CurrentBackBuffer{};
 
     CHW* pDevice;
-    CHW* pContext;
-    CHW* m_pSwapChain;
     GLuint pPP;
     GLuint pFB;
 
@@ -55,6 +58,7 @@ public:
     pcstr ShadingVersion;
     std::pair<GLint, GLint> OpenGLVersion;
     bool ShaderBinarySupported;
+    bool ComputeShadersSupported;
 };
 
 extern ECORE_API CHW HW;

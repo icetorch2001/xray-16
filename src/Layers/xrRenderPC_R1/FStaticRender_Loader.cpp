@@ -37,7 +37,7 @@ void CRender::level_Load(IReader* fs)
             if (0 == n[0])
                 continue;
             xr_strcpy(n_sh, n);
-            LPSTR delim = strchr(n_sh, '/');
+            pstr delim = strchr(n_sh, '/');
             *delim = 0;
             xr_strcpy(n_tlist, delim + 1);
             Shaders[i] = Resources->Create(n_sh, n_tlist);
@@ -244,7 +244,7 @@ void CRender::LoadBuffers(CStreamReader* base_fs, bool alternative)
 
             // Create and fill
             _VB[i].Create(vCount * vSize);
-            BYTE* pData = static_cast<BYTE*>(_VB[i].Map());
+            u8* pData = static_cast<u8*>(_VB[i].Map());
             fs->r(pData, vCount * vSize);
             //			CopyMemory			(pData,fs->pointer(),vCount*vSize);	//.???? copy while skip T&B
             _VB[i].Unmap(true); // upload vertex data
@@ -273,7 +273,7 @@ void CRender::LoadBuffers(CStreamReader* base_fs, bool alternative)
 
             // Create and fill
             _IB[i].Create(iCount * 2);
-            BYTE* pData = static_cast<BYTE*>(_IB[i].Map());
+            u8* pData = static_cast<u8*>(_IB[i].Map());
             //			CopyMemory			(pData,fs->pointer(),iCount*2);
             fs->r(pData, iCount * 2);
             _IB[i].Unmap(true); // upload index data
@@ -315,19 +315,12 @@ void CRender::LoadLights(IReader* fs)
     chunk->close();
 }
 
-struct b_portal
-{
-    u16 sector_front;
-    u16 sector_back;
-    svector<Fvector, 6> vertices;
-};
-
 void CRender::LoadSectors(IReader* fs)
 {
     // allocate memory for portals
     u32 size = fs->find_chunk(fsL_PORTALS);
-    R_ASSERT(0 == size % sizeof(b_portal));
-    u32 count = size / sizeof(b_portal);
+    R_ASSERT(0 == size % sizeof(CPortal::b_portal));
+    u32 count = size / sizeof(CPortal::b_portal);
     Portals.resize(count);
     for (u32 c = 0; c < count; c++)
         Portals[c] = xr_new<CPortal>();
@@ -351,31 +344,61 @@ void CRender::LoadSectors(IReader* fs)
     // load portals
     if (count)
     {
-        u32 i;
+        bool do_rebuild = true;
+        const bool use_cache = strstr(Core.Params, "-cdb_cache");
+
+        string_path fName;
+        strconcat(fName, "cdb_cache" DELIMITER, FS.get_path("$level$")->m_Add, "portals.bin");
+        FS.update_path(fName, "$app_data_root$", fName);
+
+        // build portal model
+        rmPortals = xr_new<CDB::MODEL>();
+        rmPortals->set_version(fs->get_age());
+        if (use_cache && FS.exist(fName) && rmPortals->deserialize(fName))
+        {
+#ifndef MASTER_GOLD
+            Msg("* Loaded portals cache (%s)...", fName);
+#endif
+            do_rebuild = false;
+        }
+        else
+        {
+#ifndef MASTER_GOLD
+            Msg("* Portals cache for '%s' was not loaded. "
+                "Building the model from scratch..", fName);
+#endif
+        }
+
         CDB::Collector CL;
         fs->find_chunk(fsL_PORTALS);
-        for (i = 0; i < count; i++)
+        for (u32 i = 0; i < count; i++)
         {
-            b_portal P;
+            CPortal::b_portal P;
             fs->r(&P, sizeof(P));
             CPortal* __P = (CPortal*)Portals[i];
             __P->Setup(P.vertices.begin(), P.vertices.size(), (CSector*)getSector(P.sector_front),
                 (CSector*)getSector(P.sector_back));
-            for (u32 j = 2; j < P.vertices.size(); j++)
-                CL.add_face_packed_D(P.vertices[0], P.vertices[j - 1], P.vertices[j], u32(i));
-        }
-        if (CL.getTS() < 2)
-        {
-            Fvector v1, v2, v3;
-            v1.set(-20000.f, -20000.f, -20000.f);
-            v2.set(-20001.f, -20001.f, -20001.f);
-            v3.set(-20002.f, -20002.f, -20002.f);
-            CL.add_face_packed_D(v1, v2, v3, 0);
+            if (do_rebuild)
+            {
+                for (u32 j = 2; j < P.vertices.size(); j++)
+                    CL.add_face_packed_D(P.vertices[0], P.vertices[j - 1], P.vertices[j], u32(i));
+            }
         }
 
-        // build portal model
-        rmPortals = xr_new<CDB::MODEL>();
-        rmPortals->build(CL.getV(), int(CL.getVS()), CL.getT(), int(CL.getTS()));
+        if (do_rebuild)
+        {
+            if (CL.getTS() < 2)
+            {
+                Fvector v1, v2, v3;
+                v1.set(-20000.f, -20000.f, -20000.f);
+                v2.set(-20001.f, -20001.f, -20001.f);
+                v3.set(-20002.f, -20002.f, -20002.f);
+                CL.add_face_packed_D(v1, v2, v3, 0);
+            }
+            rmPortals->build(CL.getV(), int(CL.getVS()), CL.getT(), int(CL.getTS()));
+            if (use_cache)
+                rmPortals->serialize(fName);
+        }
     }
     else
     {

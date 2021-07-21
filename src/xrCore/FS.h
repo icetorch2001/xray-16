@@ -79,7 +79,7 @@ public:
     }
     IC void w_stringZ(const xr_string& p)
     {
-        w(p.c_str() ? p.c_str() : "", p.size());
+        w(p.c_str(), p.size());
         w_u8(0);
     }
     IC void w_fcolor(const Fcolor& v) { w(&v, sizeof(Fcolor)); }
@@ -120,7 +120,7 @@ public:
     virtual void flush() = 0;
 };
 
-class XRCORE_API CMemoryWriter : public IWriter
+class XRCORE_API CMemoryWriter final : public IWriter
 {
     u8* data;
     size_t position;
@@ -135,7 +135,8 @@ public:
         mem_size = 0;
         file_size = 0;
     }
-    virtual ~CMemoryWriter();
+
+    ~CMemoryWriter() override;
 
     // kernel
     void w(const void* ptr, size_t count) override;
@@ -191,11 +192,13 @@ class IReaderBase
 
 {
 public:
-    IC IReaderBase() : m_last_pos(0) {}
-    virtual ~IReaderBase() {}
+    IC IReaderBase() : m_last_pos(0), m_file_age(0) {}
+    virtual ~IReaderBase() = default;
     IC implementation_type& impl() { return *(implementation_type*)this; }
     IC const implementation_type& impl() const { return *(implementation_type*)this; }
 
+    IC void set_age(u32 age) { m_file_age = age; }
+    IC u32 get_age() const { return m_file_age; }
     IC bool eof() const { return impl().elapsed() <= 0; };
     virtual void r(void* p, size_t cnt) { impl().r(p, cnt); }
 
@@ -329,6 +332,7 @@ public:
 
 private:
     size_t m_last_pos;
+    u32 m_file_age;
 };
 
 class XRCORE_API IReader : public IReaderBase<IReader>
@@ -344,7 +348,8 @@ public:
         : data(nullptr), Pos(0),
           Size(0), iterpos(0) {}
 
-    virtual ~IReader() = default;
+    ~IReader() override = default;
+
     IC IReader(void* _data, size_t _size, size_t _iterpos = 0)
     {
         data = (char*)_data;
@@ -371,14 +376,14 @@ public:
     IC void seek(size_t ptr)
     {
         Pos = ptr;
-        VERIFY((Pos <= Size) && (Pos >= 0));
+        VERIFY(Pos <= Size);
     }
     IC size_t length() const { return Size; }
     IC void* pointer() const { return &(data[Pos]); }
     IC void advance(size_t cnt)
     {
         Pos += cnt;
-        VERIFY((Pos <= Size) && (Pos >= 0));
+        VERIFY(Pos <= Size);
     }
 
 public:
@@ -409,7 +414,7 @@ private:
     typedef IReaderBase<IReader> inherited;
 };
 
-class XRCORE_API CVirtualFileRW : public IReader
+class XRCORE_API CVirtualFileRW final : public IReader
 {
 private:
 #if defined(XR_PLATFORM_WINDOWS)
@@ -420,7 +425,7 @@ private:
 
 public:
     CVirtualFileRW(pcstr cFileName);
-    virtual ~CVirtualFileRW();
+    ~CVirtualFileRW() override;
 };
 
 #endif // fsH

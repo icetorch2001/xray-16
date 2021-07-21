@@ -106,6 +106,7 @@ void CObjectSpace::Load(IReader* F, CDB::build_callback build_callback)
     F->r(&H, sizeof(hdrCFORM));
     Fvector* verts = (Fvector*)F->pointer();
     CDB::TRI* tris = (CDB::TRI*)(verts + H.vertcount);
+    Static.set_version(F->get_age());
     Create(verts, tris, H, build_callback);
     FS.r_close(F);
 }
@@ -113,7 +114,29 @@ void CObjectSpace::Load(IReader* F, CDB::build_callback build_callback)
 void CObjectSpace::Create(Fvector* verts, CDB::TRI* tris, const hdrCFORM& H, CDB::build_callback build_callback)
 {
     R_ASSERT(CFORM_CURRENT_VERSION == H.version);
-    Static.build(verts, H.vertcount, tris, H.facecount, build_callback);
+
+    string_path fName;
+    bool bUseCache = strstr(Core.Params, "-cdb_cache");
+    strconcat(fName, "cdb_cache" DELIMITER, FS.get_path("$level$")->m_Add, "objspace.bin");
+    FS.update_path(fName, "$app_data_root$", fName);
+    if (bUseCache && FS.exist(fName) && Static.deserialize(fName))
+    {
+#ifndef MASTER_GOLD
+        Msg("* Loaded ObjectSpace cache (%s)...", fName);
+#endif
+    }
+    else
+    {
+#ifndef MASTER_GOLD
+        Msg("* ObjectSpace cache for '%s' was not loaded. "
+            "Building the model from scratch..", fName);
+#endif
+        Static.build(verts, H.vertcount, tris, H.facecount, build_callback);
+
+        if (bUseCache)
+            Static.serialize(fName);
+    }
+
     m_BoundingVolume.set(H.aabb);
     g_SpatialSpace->initialize(m_BoundingVolume);
     g_SpatialSpacePhysic->initialize(m_BoundingVolume);

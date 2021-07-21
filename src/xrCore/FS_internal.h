@@ -20,7 +20,7 @@ void* FileDownload(pcstr fn, size_t* pdwSize = nullptr);
 void FileCompress(pcstr fn, pcstr sign, void* data, size_t size);
 void* FileDecompress(pcstr fn, pcstr sign, size_t* size = nullptr);
 
-class CFileWriter : public IWriter
+class CFileWriter final : public IWriter
 {
 private:
     FILE* hf;
@@ -46,19 +46,23 @@ public:
         {
             hf = fopen(conv_fn, "wb");
             if (hf == 0)
-                Msg("!Can't write file: '%s'. Error: '%s'.", conv_fn, _sys_errlist[errno]);
+            {
+                string1024 error;
+                xr_strerror(errno, error, sizeof(error));
+                Msg("! Can't write file: '%s'. Error: '%s'.", conv_fn, error);
+            }
         }
         xr_free(conv_fn);
     }
 
-    virtual ~CFileWriter()
+    ~CFileWriter() override
     {
         if (0 != hf)
         {
             fclose(hf);
             // release RO attrib
 #if defined(XR_PLATFORM_WINDOWS)
-            DWORD dwAttr = GetFileAttributes(fName.c_str());
+            u32 dwAttr = GetFileAttributes(fName.c_str());
             if ((dwAttr != u32(-1)) && (dwAttr & FILE_ATTRIBUTE_READONLY))
             {
                 dwAttr &= ~FILE_ATTRIBUTE_READONLY;
@@ -78,12 +82,16 @@ public:
             for (req_size = count; req_size > mb_sz; req_size -= mb_sz, ptr += mb_sz)
             {
                 size_t W = fwrite(ptr, mb_sz, 1, hf);
-                R_ASSERT3(W == 1, "Can't write mem block to file. Disk maybe full.", _sys_errlist[errno]);
+                string1024 error;
+                xr_strerror(errno, error, sizeof(error));
+                R_ASSERT3(W == 1, "Can't write mem block to file. Disk maybe full.", error);
             }
             if (req_size)
             {
                 size_t W = fwrite(ptr, req_size, 1, hf);
-                R_ASSERT3(W == 1, "Can't write mem block to file. Disk maybe full.", _sys_errlist[errno]);
+                string1024 error;
+                xr_strerror(errno, error, sizeof(error));
+                R_ASSERT3(W == 1, "Can't write mem block to file. Disk maybe full.", error);
             }
         }
     };
@@ -104,33 +112,33 @@ public:
 };
 
 // It automatically frees memory after destruction
-class CTempReader : public IReader
+class CTempReader final : public IReader
 {
 public:
     CTempReader(void* _data, size_t _size, size_t _iterpos) : IReader(_data, _size, _iterpos) {}
-    virtual ~CTempReader();
+    ~CTempReader() override;
 };
-class CPackReader : public IReader
+class CPackReader final : public IReader
 {
     void* base_address;
 
 public:
     CPackReader(void* _base, void* _data, size_t _size) : IReader(_data, _size), base_address(_base) {}
-    virtual ~CPackReader();
+    ~CPackReader() override;
 };
-class XRCORE_API CFileReader : public IReader
+class XRCORE_API CFileReader final : public IReader
 {
 public:
     CFileReader(pcstr name);
-    virtual ~CFileReader();
+    ~CFileReader() override;
 };
-class CCompressedReader : public IReader
+class CCompressedReader final : public IReader
 {
 public:
     CCompressedReader(const char* name, const char* sign);
-    virtual ~CCompressedReader();
+    ~CCompressedReader() override;
 };
-class CVirtualFileReader : public IReader
+class CVirtualFileReader final : public IReader
 {
 private:
 #if defined(XR_PLATFORM_WINDOWS)
@@ -141,7 +149,7 @@ private:
 
 public:
     CVirtualFileReader(pcstr cFileName);
-    virtual ~CVirtualFileReader();
+    ~CVirtualFileReader() override;
 };
 
 #endif

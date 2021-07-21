@@ -97,7 +97,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-class XRCORE_API COMotion : public CCustomMotion
+class XRCORE_API COMotion final : public CCustomMotion
 {
 protected:
     CEnvelope* envs[ctMaxChannel];
@@ -105,16 +105,16 @@ protected:
 public:
     COMotion();
     COMotion(COMotion* src);
-    virtual ~COMotion();
+    ~COMotion() override;
 
     void Clear();
 
     void _Evaluate(float t, Fvector& T, Fvector& R);
-    virtual void Save(IWriter& F);
-    virtual bool Load(IReader& F);
+    void Save(IWriter& F) override;
+    bool Load(IReader& F) override;
 
-    virtual void SaveMotion(const char* buf);
-    virtual bool LoadMotion(const char* buf);
+    void SaveMotion(const char* buf) override;
+    bool LoadMotion(const char* buf) override;
 
     void FindNearestKey(float t, float& min_k, float& max_k, float eps = EPS_L);
     void CreateKey(float t, const Fvector& P, const Fvector& R);
@@ -143,7 +143,7 @@ enum ESMFlags
 
 #include "SkeletonMotions.hpp"
 
-class XRCORE_API CSMotion : public CCustomMotion
+class XRCORE_API CSMotion final : public CCustomMotion
 {
 protected:
     BoneMotionVec bone_mots;
@@ -163,7 +163,7 @@ public:
 public:
     CSMotion();
     CSMotion(CSMotion* src);
-    virtual ~CSMotion();
+    ~CSMotion() override;
 
     void _Evaluate(int bone_idx, float t, Fvector& T, Fvector& R);
 
@@ -174,11 +174,11 @@ public:
     Flags8 GetMotionFlags(int bone_idx) { return bone_mots[bone_idx].m_Flags; }
     void add_empty_motion(shared_str const& bone_id);
 
-    virtual void Save(IWriter& F);
-    virtual bool Load(IReader& F);
+    void Save(IWriter& F) override;
+    bool Load(IReader& F) override;
 
-    virtual void SaveMotion(const char* buf);
-    virtual bool LoadMotion(const char* buf);
+    void SaveMotion(const char* buf) override;
+    bool LoadMotion(const char* buf) override;
 
     void SortBonesBySkeleton(BoneVec& bones);
     void WorldRotate(int boneId, float h, float p, float b);

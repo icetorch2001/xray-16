@@ -51,13 +51,8 @@ CSoundRender_Core::CSoundRender_Core()
 
 CSoundRender_Core::~CSoundRender_Core()
 {
-#ifdef _EDITOR
-    ETOOLS::destroy_model(geom_ENV);
-    ETOOLS::destroy_model(geom_SOM);
-#else
     xr_delete(geom_ENV);
     xr_delete(geom_SOM);
-#endif
 }
 
 void CSoundRender_Core::_initialize()
@@ -155,11 +150,7 @@ void CSoundRender_Core::set_geometry_occ(CDB::MODEL* M) { geom_MODEL = M; }
 
 void CSoundRender_Core::set_geometry_som(IReader* I)
 {
-#ifdef _EDITOR
-    ETOOLS::destroy_model(geom_SOM);
-#else
     xr_delete(geom_SOM);
-#endif
     if (nullptr == I)
         return;
 
@@ -167,9 +158,11 @@ void CSoundRender_Core::set_geometry_som(IReader* I)
     R_ASSERT(I->find_chunk(0));
     u32 version = I->r_u32();
     VERIFY2(version == 0, "Invalid SOM version");
+
     // load geometry
     IReader* geom = I->open_chunk(1);
     VERIFY2(geom, "Corrupted SOM file");
+
     // Load tris and merge them
     struct SOM_poly
     {
@@ -179,20 +172,8 @@ void CSoundRender_Core::set_geometry_som(IReader* I)
         u32 b2sided;
         float occ;
     };
+
     // Create AABB-tree
-#ifdef _EDITOR
-    CDB::Collector* CL = ETOOLS::create_collector();
-    while (!geom->eof())
-    {
-        SOM_poly P;
-        geom->r(&P, sizeof(P));
-        ETOOLS::collector_add_face_pd(CL, P.v1, P.v2, P.v3, *(u32*)&P.occ, 0.01f);
-        if (P.b2sided)
-            ETOOLS::collector_add_face_pd(CL, P.v3, P.v2, P.v1, *(u32*)&P.occ, 0.01f);
-    }
-    geom_SOM = ETOOLS::create_model_cl(CL);
-    ETOOLS::destroy_collector(CL);
-#else
     CDB::Collector CL;
     while (!geom->eof())
     {
@@ -204,18 +185,13 @@ void CSoundRender_Core::set_geometry_som(IReader* I)
     }
     geom_SOM = xr_new<CDB::MODEL>();
     geom_SOM->build(CL.getV(), int(CL.getVS()), CL.getT(), int(CL.getTS()));
-#endif
 
     geom->close();
 }
 
 void CSoundRender_Core::set_geometry_env(IReader* I)
 {
-#ifdef _EDITOR
-    ETOOLS::destroy_model(geom_ENV);
-#else
     xr_delete(geom_ENV);
-#endif
     if (nullptr == I)
         return;
     if (nullptr == s_environment)
@@ -256,12 +232,10 @@ void CSoundRender_Core::set_geometry_env(IReader* I)
         R_ASSERT(id_back < (u16)ids.size());
         T->dummy = u32(ids[id_back] << 16) | u32(ids[id_front]);
     }
-#ifdef _EDITOR
-    geom_ENV = ETOOLS::create_model(verts, H.vertcount, tris, H.facecount);
-    env_apply();
-#else
     geom_ENV = xr_new<CDB::MODEL>();
     geom_ENV->build(verts, H.vertcount, tris, H.facecount);
+#ifdef _EDITOR // XXX: may be we are interested in applying env in the game build too?
+    env_apply();
 #endif
     geom_ch->close();
     geom->close();
@@ -439,19 +413,11 @@ CSoundRender_Environment* CSoundRender_Core::get_environment(const Fvector& P)
     if (geom_ENV)
     {
         Fvector dir = {0, -1, 0};
-#ifdef _EDITOR
-            ETOOLS::ray_options(CDB::OPT_ONLYNEAREST);
-            ETOOLS::ray_query(geom_ENV, P, dir, 1000.f);
-            if (ETOOLS::r_count())
-            {
-                CDB::RESULT* r = ETOOLS::r_begin();
-#else
         geom_DB.ray_options(CDB::OPT_ONLYNEAREST);
         geom_DB.ray_query(geom_ENV, P, dir, 1000.f);
         if (geom_DB.r_count())
         {
             CDB::RESULT* r = geom_DB.r_begin();
-#endif
             CDB::TRI* T = geom_ENV->get_tris() + r->id;
             Fvector* V = geom_ENV->get_verts();
             Fvector tri_norm;
@@ -511,8 +477,8 @@ void CSoundRender_Core::i_eax_listener_set(CSound_environment* _E)
 
     u32 deferred = bDeferredEAX ? DSPROPERTY_EAXLISTENER_DEFERRED : 0;
 
-    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_ROOM, &ep.lRoom, sizeof(LONG));
-    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_ROOMHF, &ep.lRoomHF, sizeof(LONG));
+    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_ROOM, &ep.lRoom, sizeof(ep.lRoom));
+    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_ROOMHF, &ep.lRoomHF, sizeof(ep.lRoomHF));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_ROOMROLLOFFFACTOR,
               &ep.flRoomRolloffFactor, sizeof(float));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_DECAYTIME, &ep.flDecayTime,
@@ -520,17 +486,17 @@ void CSoundRender_Core::i_eax_listener_set(CSound_environment* _E)
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_DECAYHFRATIO, &ep.flDecayHFRatio,
               sizeof(float));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_REFLECTIONS, &ep.lReflections,
-              sizeof(LONG));
+              sizeof(ep.lReflections));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_REFLECTIONSDELAY,
               &ep.flReflectionsDelay, sizeof(float));
-    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_REVERB, &ep.lReverb, sizeof(LONG));
+    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_REVERB, &ep.lReverb, sizeof(ep.lReverb));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_REVERBDELAY, &ep.flReverbDelay,
               sizeof(float));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_ENVIRONMENTDIFFUSION,
               &ep.flEnvironmentDiffusion, sizeof(float));
     i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_AIRABSORPTIONHF,
               &ep.flAirAbsorptionHF, sizeof(float));
-    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_FLAGS, &ep.dwFlags, sizeof(DWORD));
+    i_eax_set(&DSPROPSETID_EAX_ListenerProperties, deferred | DSPROPERTY_EAXLISTENER_FLAGS, &ep.dwFlags, sizeof(u32));
 }
 
 void CSoundRender_Core::i_eax_listener_get(CSound_environment* _E)

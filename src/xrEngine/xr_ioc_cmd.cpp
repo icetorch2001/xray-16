@@ -589,15 +589,13 @@ virtual void Save (IWriter *F) {};
 #endif
 */
 
-ENGINE_API bool r2_sun_static = true;
-ENGINE_API bool r2_advanced_pp = false; // advanced post process and effects
 ENGINE_API bool renderer_allow_override = false;
 
 class CCC_renderer : public CCC_Token
 {
     typedef CCC_Token inherited;
 
-    u32 renderer_value = 3;
+    u32 renderer_value = 0;
     static bool cmd_lock;
 
 public:
@@ -622,20 +620,6 @@ public:
         tokens = VidQualityToken.data();
 
         inherited::Execute(args);
-        // 0 - r1
-        // 1..3 - r2
-        // 4 - r3
-        // 5 - r4
-        // 6 - rgl
-        psDeviceFlags.set(rsR1, renderer_value == 0);
-        psDeviceFlags.set(rsR2, ((renderer_value > 0) && renderer_value < 4));
-        psDeviceFlags.set(rsR3, (renderer_value == 4));
-        psDeviceFlags.set(rsR4, (renderer_value == 5));
-        psDeviceFlags.set(rsRGL, (renderer_value == 6));
-
-        r2_sun_static = (renderer_value < 2);
-
-        r2_advanced_pp = (renderer_value >= 3);
     
         cmd_lock = true;
     }
@@ -673,7 +657,7 @@ public:
         if (0 != xr_strcmp(args, "apply"))
             inherited::Execute(args);
 
-        if (!psDeviceFlags.test(rsRGL))
+        if (GEnv.Render->GetBackendAPI() != IRender::BackendAPI::OpenGL)
             return;
 
         if (psDeviceFlags.test(rsVSync))
@@ -863,6 +847,7 @@ void CCC_Register()
     CMD3(CCC_Mask, "rs_refresh_60hz", &psDeviceFlags, rsRefresh60hz);
     CMD3(CCC_Mask, "rs_stats", &psDeviceFlags, rsStatistic);
     CMD3(CCC_Mask, "rs_fps", &psDeviceFlags, rsShowFPS);
+    CMD3(CCC_Mask, "rs_fps_graph", &psDeviceFlags, rsShowFPSGraph);
     CMD4(CCC_Float, "rs_vis_distance", &psVisDistance, 0.4f, 1.5f);
 
     CMD3(CCC_Mask, "rs_cam_pos", &psDeviceFlags, rsCameraPos);

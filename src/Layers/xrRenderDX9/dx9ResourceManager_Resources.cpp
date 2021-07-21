@@ -75,7 +75,7 @@ SDeclaration* CResourceManager::_CreateDecl(VertexElement* dcl)
 }
 
 //--------------------------------------------------------------------------------------------------------------
-SVS* CResourceManager::_CreateVS(cpcstr shader, cpcstr fallbackShader /*= nullptr*/, u32 flags /*= 0*/)
+SVS* CResourceManager::_CreateVS(cpcstr shader, u32 flags /*= 0*/)
 {
     string_path name;
     xr_strcpy(name, shader);
@@ -98,13 +98,13 @@ SVS* CResourceManager::_CreateVS(cpcstr shader, cpcstr fallbackShader /*= nullpt
         break;
     }
 
-    return CreateShader<SVS>(name, shader, fallbackShader, flags);
+    return CreateShader<SVS>(name, shader, flags);
 }
 
 void CResourceManager::_DeleteVS(const SVS* vs) { DestroyShader(vs); }
 
 //--------------------------------------------------------------------------------------------------------------
-SPS* CResourceManager::_CreatePS(LPCSTR name) { return CreateShader<SPS>(name, nullptr, nullptr); }
+SPS* CResourceManager::_CreatePS(LPCSTR name) { return CreateShader<SPS>(name, nullptr); }
 void CResourceManager::_DeletePS(const SPS* ps) { DestroyShader(ps); }
 
 //--------------------------------------------------------------------------------------------------------------
@@ -191,7 +191,7 @@ SVS* CResourceManager::_CreateVS(LPCSTR _name)
         xr_strcat(name, "_3");
     if (4 == GEnv.Render->m_skinning)
         xr_strcat(name, "_4");
-    LPSTR N = LPSTR(name);
+    pstr N = pstr(name);
     map_VS::iterator I = m_vs.find(N);
     if (I != m_vs.end())
         return I->second;
@@ -229,7 +229,7 @@ SVS* CResourceManager::_CreateVS(LPCSTR _name)
             c_target = "vs_1_1";
 
         u32 needed_len = fs->length() + 1;
-        LPSTR pfs = xr_alloc<char>(needed_len);
+        pstr pfs = xr_alloc<char>(needed_len);
         strncpy_s(pfs, needed_len, (LPCSTR)fs->pointer(), fs->length());
         pfs[fs->length()] = 0;
 
@@ -312,7 +312,7 @@ SVS* CResourceManager::_CreateVS(LPCSTR _name)
 //--------------------------------------------------------------------------------------------------------------
 SPS* CResourceManager::_CreatePS(LPCSTR name)
 {
-    LPSTR N = LPSTR(name);
+    pstr N = pstr(name);
     map_PS::iterator I = m_ps.find(N);
     if (I != m_ps.end())
         return I->second;

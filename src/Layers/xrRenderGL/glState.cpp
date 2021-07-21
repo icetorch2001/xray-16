@@ -28,6 +28,8 @@ glState::glState()
     m_pBlendState.BlendOp = D3DBLENDOP_ADD;
     m_pBlendState.BlendOpAlpha = D3DBLENDOP_ADD;
     m_pBlendState.ColorMask = 0xF;
+
+    m_uiMipLODBias = FLT_MAX;
 }
 
 glState* glState::Create()
@@ -42,8 +44,19 @@ void glState::Apply()
     for (size_t stage = 0; stage < CTexture::mtMaxCombinedShaderTextures; stage++)
     {
         if (m_samplerArray[stage])
+        {
             glBindSampler(stage, m_samplerArray[stage]);
+
+            if (!fsimilar(m_uiMipLODBias, ps_r__tf_Mipbias))
+            {
+                CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_MIN_LOD, 0.f));
+                CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_MAX_LOD, FLT_MAX));
+                CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, ps_r__tf_Mipbias));
+            }
+        }
     }
+
+    m_uiMipLODBias = ps_r__tf_Mipbias;
 
     RCache.set_CullMode(rasterizerCullMode);
     RCache.set_Z(m_pDepthStencilState.DepthEnable);
@@ -117,11 +130,11 @@ void glState::UpdateRenderState(u32 name, u32 value)
         break;
 
     case D3DRS_STENCILMASK:
-        m_pDepthStencilState.StencilMask = (UINT)value;
+        m_pDepthStencilState.StencilMask = (u32)value;
         break;
 
     case D3DRS_STENCILWRITEMASK:
-        m_pDepthStencilState.StencilWriteMask = (UINT)value;
+        m_pDepthStencilState.StencilWriteMask = (u32)value;
         break;
 
     case D3DRS_STENCILFAIL:
@@ -176,7 +189,7 @@ void glState::UpdateRenderState(u32 name, u32 value)
     case D3DRS_COLORWRITEENABLE1:
     case D3DRS_COLORWRITEENABLE2:
     case D3DRS_COLORWRITEENABLE3:
-        m_pBlendState.ColorMask = (UINT)value;
+        m_pBlendState.ColorMask = (u32)value;
         break;
 
     case D3DRS_LIGHTING:
@@ -194,7 +207,7 @@ void glState::UpdateRenderState(u32 name, u32 value)
 
 void glState::UpdateSamplerState(u32 stage, u32 name, u32 value)
 {
-    if (stage < 0 || CTexture::mtMaxCombinedShaderTextures < stage)
+    if (stage < 0 || stage >= CTexture::mtMaxCombinedShaderTextures)
         return;
 
     GLint currentFilter = (GLint)GL_NEAREST;
@@ -237,7 +250,7 @@ void glState::UpdateSamplerState(u32 stage, u32 name, u32 value)
             value, currentFilter, true)));
         break;
     case D3DSAMP_MIPMAPLODBIAS: /* float Mipmap LOD bias */
-        CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, *(float*)value));
+        CHK_GL(glSamplerParameterf(m_samplerArray[stage], GL_TEXTURE_LOD_BIAS, value));
         break;
     case D3DSAMP_MAXMIPLEVEL: /* DWORD 0..(n-1) LOD index of largest map to use (0 == largest) */
         CHK_GL(glSamplerParameteri(m_samplerArray[stage], GL_TEXTURE_MAX_LEVEL, value));

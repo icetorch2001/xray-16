@@ -4,8 +4,7 @@
 
 #include "stdafx.h"
 
-#include <tbb/blocked_range.h>
-#include <tbb/parallel_for.h>
+#include "xrCore/Threading/ParallelFor.hpp"
 
 #include "HOM.h"
 #include "occRasterizer.h"
@@ -13,19 +12,6 @@
 #include "xrEngine/PerformanceAlert.hpp"
 
 float psOSSR = .001f;
-
-void __stdcall CHOM::MT_RENDER()
-{
-    MT.Enter();
-    if (MT_frame_rendered != Device.dwFrame)
-    {
-        CFrustum ViewBase;
-        ViewBase.CreateFromMatrix(Device.mFullTransform, FRUSTUM_P_LRTB + FRUSTUM_P_FAR);
-        Enable();
-        Render(ViewBase);
-    }
-    MT.Leave();
-}
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -58,11 +44,11 @@ struct HOM_poly
 
 IC float Area(Fvector& v0, Fvector& v1, Fvector& v2)
 {
-    float e1 = v0.distance_to(v1);
-    float e2 = v0.distance_to(v2);
-    float e3 = v1.distance_to(v2);
+    const float e1 = v0.distance_to(v1);
+    const float e2 = v0.distance_to(v2);
+    const float e3 = v1.distance_to(v2);
 
-    float p = (e1 + e2 + e3) / 2.f;
+    const float p = (e1 + e2 + e3) / 2.f;
     return _sqrt(p * (p - e1) * (p - e2) * (p - e3));
 }
 
@@ -100,7 +86,9 @@ void CHOM::Load()
     // Create RASTER-triangles
     m_pTris = xr_alloc<occTri>(u32(CL.getTS()));
 
-    FOR_START(u32, 0, CL.getTS(), it)
+    xr_parallel_for(TaskRange<u32>(0, CL.getTS()), [&](const TaskRange<u32>& range)
+    {
+        for (u32 it = range.begin(); it != range.end(); ++it)
         {
             CDB::TRI& clT = CL.getT()[it];
             occTri& rT = m_pTris[it];
@@ -120,11 +108,33 @@ void CHOM::Load()
             rT.skip = 0;
             rT.center.add(v0, v1).add(v2).div(3.f);
         }
-    FOR_END
+    });
 
     // Create AABB-tree
     m_pModel = xr_new<CDB::MODEL>();
-    m_pModel->build(CL.getV(), int(CL.getVS()), CL.getT(), int(CL.getTS()));
+    m_pModel->set_version(fs->get_age());
+    bool bUseCache = strstr(Core.Params, "-cdb_cache");
+
+    strconcat(fName, "cdb_cache" DELIMITER, FS.get_path("$level$")->m_Add, "hom.bin");
+    FS.update_path(fName, "$app_data_root$", fName);
+
+    if (bUseCache && FS.exist(fName) && m_pModel->deserialize(fName))
+    {
+#ifndef MASTER_GOLD
+        Msg("* Loaded HOM cache (%s)...", fName);
+#endif
+    }
+    else
+    {
+#ifndef MASTER_GOLD
+        Msg("* HOM cache for '%s' was not loaded. Building the model from scratch..", fName);
+#endif
+        m_pModel->build(CL.getV(), int(CL.getVS()), CL.getT(), int(CL.getTS()));
+
+        if (bUseCache)
+            m_pModel->serialize(fName);
+    }
+
     bEnabled = TRUE;
     S->close();
     FS.r_close(fs);
@@ -256,29 +266,36 @@ void CHOM::Render(CFrustum& base)
     Raster.clear();
     Render_DB(base);
     Raster.propagade();
-    MT_frame_rendered = Device.dwFrame;
     stats.Total.End();
 }
 
-ICF BOOL xform_b0(Fvector2& min, Fvector2& max, float& minz, Fmatrix& X, float _x, float _y, float _z)
+void xr_stdcall CHOM::MT_RENDER(Task& /*thisTask*/, void* /*data*/)
 {
-    float z = _x * X._13 + _y * X._23 + _z * X._33 + X._43;
+    CFrustum ViewBase;
+    ViewBase.CreateFromMatrix(Device.mFullTransform, FRUSTUM_P_LRTB + FRUSTUM_P_FAR);
+    Enable();
+    Render(ViewBase);
+}
+
+ICF BOOL xform_b0(Fvector2& min, Fvector2& max, float& minz, const Fmatrix& X, float _x, float _y, float _z)
+{
+    const float z = _x * X._13 + _y * X._23 + _z * X._33 + X._43;
     if (z < EPS)
         return TRUE;
-    float iw = 1.f / (_x * X._14 + _y * X._24 + _z * X._34 + X._44);
+    const float iw = 1.f / (_x * X._14 + _y * X._24 + _z * X._34 + X._44);
     min.x = max.x = (_x * X._11 + _y * X._21 + _z * X._31 + X._41) * iw;
     min.y = max.y = (_x * X._12 + _y * X._22 + _z * X._32 + X._42) * iw;
     minz = 0.f + z * iw;
     return FALSE;
 }
-ICF BOOL xform_b1(Fvector2& min, Fvector2& max, float& minz, Fmatrix& X, float _x, float _y, float _z)
+
+ICF BOOL xform_b1(Fvector2& min, Fvector2& max, float& minz, const Fmatrix& X, float _x, float _y, float _z)
 {
-    float t;
-    float z = _x * X._13 + _y * X._23 + _z * X._33 + X._43;
+    const float z = _x * X._13 + _y * X._23 + _z * X._33 + X._43;
     if (z < EPS)
         return TRUE;
-    float iw = 1.f / (_x * X._14 + _y * X._24 + _z * X._34 + X._44);
-    t = (_x * X._11 + _y * X._21 + _z * X._31 + X._41) * iw;
+    const float iw = 1.f / (_x * X._14 + _y * X._24 + _z * X._34 + X._44);
+    float t = (_x * X._11 + _y * X._21 + _z * X._31 + X._41) * iw;
     if (t < min.x)
         min.x = t;
     else if (t > max.x)
@@ -293,7 +310,8 @@ ICF BOOL xform_b1(Fvector2& min, Fvector2& max, float& minz, Fmatrix& X, float _
         minz = t;
     return FALSE;
 }
-IC BOOL _visible(Fbox& B, Fmatrix& m_xform_01)
+
+IC BOOL _visible(const Fbox& B, const Fmatrix& m_xform_01)
 {
     // Find min/max points of xformed-box
     Fvector2 min, max;
@@ -317,7 +335,7 @@ IC BOOL _visible(Fbox& B, Fmatrix& m_xform_01)
     return Raster.test(min.x, min.y, max.x, max.y, z);
 }
 
-BOOL CHOM::visible(Fbox3& B)
+BOOL CHOM::visible(const Fbox3& B) const
 {
     if (!bEnabled)
         return TRUE;
@@ -326,29 +344,31 @@ BOOL CHOM::visible(Fbox3& B)
     return _visible(B, m_xform_01);
 }
 
-BOOL CHOM::visible(Fbox2& B, float depth)
+BOOL CHOM::visible(const Fbox2& B, float depth) const
 {
     if (!bEnabled)
         return TRUE;
     return Raster.test(B.min.x, B.min.y, B.max.x, B.max.y, depth);
 }
 
-BOOL CHOM::visible(vis_data& vis)
+BOOL CHOM::visible(vis_data& vis) const
 {
     if (Device.dwFrame < vis.hom_frame)
         return TRUE; // not at this time :)
     if (!bEnabled)
         return TRUE; // return - everything visible
-    stats.Total.Begin();
+
+    ScopeStatTimer scopeStats(stats.Total, stats.TotalTimerLock);
+
     // Now, the test time comes
     // 0. The object was hidden, and we must prove that each frame	- test		| frame-old, tested-new, hom_res =
     // false;
     // 1. The object was visible, but we must to re-check it		- test		| frame-new, tested-???, hom_res = true;
     // 2. New object slides into view								- delay test| frame-old, tested-old, hom_res = ???;
-    u32 frame_current = Device.dwFrame;
+    const u32 frame_current = Device.dwFrame;
     // u32	frame_prev		= frame_current-1;
 
-    BOOL result = _visible(vis.box, m_xform_01);
+    const BOOL result = _visible(vis.box, m_xform_01);
     u32 delay = 1;
     if (result)
     {
@@ -361,11 +381,10 @@ BOOL CHOM::visible(vis_data& vis)
     }
     vis.hom_frame = frame_current + delay;
     vis.hom_tested = frame_current;
-    stats.Total.End();
     return result;
 }
 
-BOOL CHOM::visible(sPoly& P)
+BOOL CHOM::visible(const sPoly& P) const
 {
     if (!bEnabled)
         return TRUE;

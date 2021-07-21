@@ -7,7 +7,11 @@
 #if defined(XR_ARCHITECTURE_X86) || defined(XR_ARCHITECTURE_X64)
 #define DEBUG_BREAK             do { __asm__ volatile ("int $3"); } while(0)
 #elif defined(XR_ARCHITECTURE_ARM)
+#if defined(__thumb__)
+#define DEBUG_BREAK             do { __asm__ volatile (".inst 0xde01"); } while(0)
+#else
 #define DEBUG_BREAK             do { __asm__ volatile (".inst 0xe7f001f0"); } while(0)
+#endif
 #elif defined(XR_ARCHITECTURE_ARM64)
 #define DEBUG_BREAK             do { __asm__ volatile (".inst 0xd4200000"); } while(0)
 #elif __has_include(<signal.h>)
@@ -54,12 +58,36 @@
 #error Provide your definitions here
 #endif
 
-#ifndef _CPPUNWIND//def NDEBUG
-#define XR_NOEXCEPT throw()
-#define XR_NOEXCEPT_OP(x)
-#else
+#ifdef __cpp_exceptions
 #define XR_NOEXCEPT noexcept
 #define XR_NOEXCEPT_OP(x) noexcept(x)
+#else
+#define XR_NOEXCEPT throw()
+#define XR_NOEXCEPT_OP(x)
+#endif
+
+#if defined(MASTER_GOLD)
+//  release master gold
+#   if defined(__cpp_exceptions) && defined(XR_PLATFORM_WINDOWS)
+#       error Please disable exceptions...
+#   endif
+#   define XRAY_EXCEPTIONS 0
+#   define LUABIND_NO_EXCEPTIONS
+#else
+//  release, debug or mixed
+#   if !defined(__cpp_exceptions)
+#       error Please enable exceptions...
+#   endif
+#   define XRAY_EXCEPTIONS 1
+#   define LUABIND_FORCE_ENABLE_EXCEPTIONS // XXX: add this to luabind, because it automatically defines LUABIND_NO_EXCEPTIONS when NDEBUG is defined
+#endif
+
+#ifndef _MT
+#error Please enable multi-threaded library...
+#endif
+
+#if !defined(DEBUG) && (defined(_DEBUG) || defined(MIXED))
+#define DEBUG
 #endif
 
 // We use xr_* instead of defining e.g. strupr => _strupr, since the macro definition could

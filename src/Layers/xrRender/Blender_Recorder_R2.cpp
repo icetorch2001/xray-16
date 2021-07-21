@@ -5,9 +5,9 @@
 #include "Blender_Recorder.h"
 #include "Blender.h"
 
-void fix_texture_name(LPSTR fn);
+void fix_texture_name(pstr fn);
 
-void CBlender_Compile::r_Pass(std::pair<cpcstr, cpcstr> _vs, LPCSTR _ps, bool bFog, BOOL bZtest, BOOL bZwrite,
+void CBlender_Compile::r_Pass(LPCSTR _vs, LPCSTR _ps, bool bFog, BOOL bZtest, BOOL bZwrite,
     BOOL bABlend, D3DBLEND abSRC, D3DBLEND abDST, BOOL aTest, u32 aRef)
 {
     RS.Invalidate();
@@ -25,11 +25,11 @@ void CBlender_Compile::r_Pass(std::pair<cpcstr, cpcstr> _vs, LPCSTR _ps, bool bF
     // Create shaders
     SPS* ps = RImplementation.Resources->_CreatePS(_ps);
     u32 flags = 0;
-#if defined(USE_DX10) || defined(USE_DX11)
+#if defined(USE_DX11)
     if (ps->constants.dx9compatibility)
         flags |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
 #endif
-    SVS* vs = RImplementation.Resources->_CreateVS(_vs.first, _vs.second, flags);
+    SVS* vs = RImplementation.Resources->_CreateVS(_vs, flags);
     dest.ps = ps;
     dest.vs = vs;
 #ifndef USE_DX9
@@ -40,7 +40,7 @@ void CBlender_Compile::r_Pass(std::pair<cpcstr, cpcstr> _vs, LPCSTR _ps, bool bF
     dest.ds = RImplementation.Resources->_CreateDS("null");
     dest.cs = RImplementation.Resources->_CreateCS("null");
 #endif
-#endif //	USE_DX10
+#endif // !USE_DX9
     ctable.merge(&ps->constants);
     ctable.merge(&vs->constants);
 
@@ -62,7 +62,7 @@ void CBlender_Compile::r_Constant(LPCSTR name, R_constant_setup* s)
 
 void CBlender_Compile::r_ColorWriteEnable(bool cR, bool cG, bool cB, bool cA)
 {
-    BYTE Mask = 0;
+    u8 Mask = 0;
     Mask |= cR ? D3DCOLORWRITEENABLE_RED : 0;
     Mask |= cG ? D3DCOLORWRITEENABLE_GREEN : 0;
     Mask |= cB ? D3DCOLORWRITEENABLE_BLUE : 0;
@@ -117,11 +117,16 @@ void CBlender_Compile::i_BorderColor(u32 s, u32 color) { RS.SetSAMP(s, D3DSAMP_B
 void CBlender_Compile::i_Filter_Min(u32 s, u32 f) { RS.SetSAMP(s, D3DSAMP_MINFILTER, f); }
 void CBlender_Compile::i_Filter_Mip(u32 s, u32 f) { RS.SetSAMP(s, D3DSAMP_MIPFILTER, f); }
 void CBlender_Compile::i_Filter_Mag(u32 s, u32 f) { RS.SetSAMP(s, D3DSAMP_MAGFILTER, f); }
+void CBlender_Compile::i_Filter_Aniso(u32 s, u32 f) { RS.SetSAMP(s, D3DSAMP_MAXANISOTROPY, f); }
 void CBlender_Compile::i_Filter(u32 s, u32 _min, u32 _mip, u32 _mag)
 {
     i_Filter_Min(s, _min);
     i_Filter_Mip(s, _mip);
     i_Filter_Mag(s, _mag);
+#if defined(USE_OGL)
+    if (_min == D3DTEXF_ANISOTROPIC && _mag == D3DTEXF_ANISOTROPIC)
+        i_Filter_Aniso(s, ps_r__tf_Anisotropic);
+#endif
 }
 
 u32 CBlender_Compile::r_Sampler(
@@ -130,7 +135,7 @@ u32 CBlender_Compile::r_Sampler(
     dwStage = i_Sampler(_name);
     if (u32(-1) != dwStage)
     {
-#if defined(USE_DX10) || defined(USE_DX11)
+#if defined(USE_DX11)
         r_dx10Texture(_name, texture, true);
 #else
         i_Texture(dwStage, texture);

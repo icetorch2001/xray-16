@@ -22,16 +22,8 @@
 #endif
 
 #if defined(XR_PLATFORM_WINDOWS)
-#ifdef __BORLANDC__
-#include "d3d9.h"
-#include "d3dx9.h"
-#include "D3DX_Wrapper.h"
-#pragma comment(lib, "EToolsB.lib")
-#define USE_BUG_TRAP
-#else
 #define USE_BUG_TRAP
 static BOOL bException = FALSE;
-#endif
 #endif
 
 #ifndef USE_BUG_TRAP
@@ -231,7 +223,7 @@ bool xrDebug::GetNextStackFrameString(LPSTACKFRAME stackFrame, PCONTEXT threadCt
     ///
     /// Function info
     ///
-    BYTE arrSymBuffer[512];
+    u8 arrSymBuffer[512];
     ZeroMemory(arrSymBuffer, sizeof(arrSymBuffer));
     PIMAGEHLP_SYMBOL functionInfo = reinterpret_cast<PIMAGEHLP_SYMBOL>(arrSymBuffer);
     functionInfo->SizeOfStruct = sizeof(*functionInfo);
@@ -283,7 +275,7 @@ bool xrDebug::InitializeSymbolEngine()
 {
     if (!symEngineInitialized)
     {
-        DWORD dwOptions = SymGetOptions();
+        u32 dwOptions = SymGetOptions();
         SymSetOptions(dwOptions | SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES | SYMOPT_UNDNAME);
 
         if (SymInitialize(GetCurrentProcess(), nullptr, TRUE))
@@ -388,36 +380,37 @@ void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLoca
         expr = "<no expression>";
     bool extendedDesc = desc && strchr(desc, '\n');
     pcstr prefix = "[error] ";
-    buffer += xr_sprintf(buffer, bufferSize, "\nFATAL ERROR\n\n");
-    buffer += xr_sprintf(buffer, bufferSize, "%sExpression    : %s\n", prefix, expr);
-    buffer += xr_sprintf(buffer, bufferSize, "%sFunction      : %s\n", prefix, loc.Function);
-    buffer += xr_sprintf(buffer, bufferSize, "%sFile          : %s\n", prefix, loc.File);
-    buffer += xr_sprintf(buffer, bufferSize, "%sLine          : %d\n", prefix, loc.Line);
+    const char* oneAboveBuffer = assertionInfo + bufferSize;
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "\nFATAL ERROR\n\n");
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sExpression    : %s\n", prefix, expr);
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sFunction      : %s\n", prefix, loc.Function);
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sFile          : %s\n", prefix, loc.File);
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sLine          : %d\n", prefix, loc.Line);
     if (extendedDesc)
     {
-        buffer += xr_sprintf(buffer, bufferSize, "\n%s\n", desc);
+        buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "\n%s\n", desc);
         if (arg1)
         {
-            buffer += xr_sprintf(buffer, bufferSize, "%s\n", arg1);
+            buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%s\n", arg1);
             if (arg2)
-                buffer += xr_sprintf(buffer, bufferSize, "%s\n", arg2);
+                buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%s\n", arg2);
         }
     }
     else
     {
-        buffer += xr_sprintf(buffer, bufferSize, "%sDescription   : %s\n", prefix, desc);
+        buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sDescription   : %s\n", prefix, desc);
         if (arg1)
         {
             if (arg2)
             {
-                buffer += xr_sprintf(buffer, bufferSize, "%sArgument 0    : %s\n", prefix, arg1);
-                buffer += xr_sprintf(buffer, bufferSize, "%sArgument 1    : %s\n", prefix, arg2);
+                buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sArgument 0    : %s\n", prefix, arg1);
+                buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sArgument 1    : %s\n", prefix, arg2);
             }
             else
-                buffer += xr_sprintf(buffer, bufferSize, "%sArguments     : %s\n", prefix, arg1);
+                buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%sArguments     : %s\n", prefix, arg1);
         }
     }
-    buffer += xr_sprintf(buffer, bufferSize, "\n");
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "\n");
     
     Log(assertionInfo);
     FlushLog();
@@ -429,7 +422,7 @@ void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLoca
 #endif
     Log("stack trace:\n");
 #ifdef USE_OWN_ERROR_MESSAGE_WINDOW
-    buffer += xr_sprintf(buffer, bufferSize, "stack trace:\n\n");
+    buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "stack trace:\n\n");
 #endif // USE_OWN_ERROR_MESSAGE_WINDOW
 #if defined(XR_PLATFORM_WINDOWS)
     xr_vector<xr_string> stackTrace = BuildStackTrace();
@@ -437,7 +430,7 @@ void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLoca
     {
         Log(stackTrace[i].c_str());
 #ifdef USE_OWN_ERROR_MESSAGE_WINDOW
-        buffer += xr_sprintf(buffer, bufferSize, "%s\n", stackTrace[i].c_str());
+        buffer += xr_sprintf(buffer, oneAboveBuffer - buffer, "%s\n", stackTrace[i].c_str());
 #endif // USE_OWN_ERROR_MESSAGE_WINDOW
     }
 #elif defined(XR_PLATFORM_LINUX)
@@ -445,30 +438,34 @@ void xrDebug::GatherInfo(char* assertionInfo, size_t bufferSize, const ErrorLoca
     int nptrs = backtrace(array, 20);     // get void*'s for all entries on the stack
     char **strings = backtrace_symbols(array, nptrs);
 
-    if(strings)
+    if (strings)
     {
+        size_t demangledBufSize = 0;
+        char* demangledName = nullptr;
         for (size_t i = 0; i < nptrs; i++)
         {
             char* functionName = strings[i];
-            char* demangledName = nullptr;
+
             Dl_info info;
 
             if (dladdr(array[i], &info))
             {
-                int status = -1;
-                demangledName = abi::__cxa_demangle(info.dli_sname, nullptr,
-                    nullptr, &status);
-                if (status == 0)
+                if (info.dli_sname)
                 {
-                    functionName = demangledName;
+                    int status = -1;
+                    demangledName = abi::__cxa_demangle(info.dli_sname, demangledName, &demangledBufSize, &status);
+                    if (status == 0)
+                    {
+                        functionName = demangledName;
+                    }
                 }
             }
             Log(functionName);
-    #ifdef USE_OWN_ERROR_MESSAGE_WINDOW
+#ifdef USE_OWN_ERROR_MESSAGE_WINDOW
             buffer += xr_sprintf(buffer, bufferSize, "%s\n", functionName);
-    #endif // USE_OWN_ERROR_MESSAGE_WINDOW
-            ::free(demangledName);
+#endif // USE_OWN_ERROR_MESSAGE_WINDOW
         }
+        ::free(demangledName);
     }
 #endif
     FlushLog();
@@ -590,12 +587,12 @@ void xrDebug::DoExit(const std::string& message)
 
     if (ShowErrorMessage)
     {
-        const auto result = ShowMessage("Error", message.c_str(), false);
+        const auto result = ShowMessage(Core.ApplicationName, message.c_str(), false);
         if (result != AssertionResult::abort && DebuggerIsPresent())
             DEBUG_BREAK;
     }
     else
-        ShowMessage("Error", message.c_str());
+        ShowMessage(Core.ApplicationName, message.c_str());
 
 #if defined(XR_PLATFORM_WINDOWS)
     TerminateProcess(GetCurrentProcess(), 1);
@@ -756,7 +753,7 @@ void xrDebug::FormatLastError(char* buffer, const size_t& bufferSize)
     }
     void* msg = nullptr;
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, lastErr,
-                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&msg, 0, nullptr);
+                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (pstr)&msg, 0, nullptr);
     // XXX nitrocaster: check buffer overflow
     xr_sprintf(buffer, bufferSize, "[error][%8d]: %s", lastErr, (char*)msg);
     LocalFree(msg);

@@ -116,7 +116,7 @@ void CDetailManager::hw_Unload()
     hw_VB.Release();
 }
 
-#if !defined(USE_DX10) && !defined(USE_DX11) && !defined(USE_OGL)
+#if defined(USE_DX9)
 void CDetailManager::hw_Load_Shaders()
 {
     // Create shader to access constant storage
@@ -140,7 +140,7 @@ void CDetailManager::hw_Render()
     //	Can't use RDEVICE.fTimeDelta since it is smoothed! Don't know why, but smoothed value looks more choppy!
     float fDelta = RDEVICE.fTimeGlobal - m_global_time_old;
     if ((fDelta < 0) || (fDelta > 1))
-        fDelta = 0.03;
+        fDelta = 0.03f;
     m_global_time_old = RDEVICE.fTimeGlobal;
 
     m_time_rot_1 += (PI_MUL_2 * fDelta / swing_current.rot1);
@@ -290,4 +290,4 @@ void CDetailManager::hw_Render_dump(ref_constant x_array, u32 var_id, u32 lod_id
     }
 }
 
-#endif //	USE_DX10
+#endif // USE_DX9

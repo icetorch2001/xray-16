@@ -45,6 +45,7 @@ public:
     xr_vector<IRender_Sector*> Sectors;
     xrXRC Sectors_xrc;
     CDB::MODEL* rmPortals;
+    Task* ProcessHOMTask;
     CHOM HOM;
 
     // Global containers
@@ -101,7 +102,8 @@ public:
 
 public:
     // feature level
-    virtual GenerationLevel get_generation() override { return IRender::GENERATION_R1; }
+    virtual GenerationLevel GetGeneration() const override { return IRender::GENERATION_R1; }
+    virtual BackendAPI GetBackendAPI() const override { return IRender::BackendAPI::D3D9; }
     virtual u32 get_dx_level() override { return 0x00090000; }
     virtual bool is_sun_static() override { return true; }
     // Loading / Unloading
@@ -112,7 +114,7 @@ public:
     virtual void level_Load(IReader* fs) override;
     virtual void level_Unload() override;
 
-    virtual IDirect3DBaseTexture9* texture_load(LPCSTR fname, u32& msize);
+    virtual ID3DBaseTexture* texture_load(LPCSTR fname, u32& msize);
     virtual HRESULT shader_compile(pcstr name, IReader* fs, pcstr pFunctionName, pcstr pTarget, u32 Flags,
         void*& result) override;
 
@@ -123,6 +125,7 @@ public:
     virtual IRender_Sector* getSector(int id) override;
     virtual IRenderVisual* getVisual(int id) override;
     virtual IRender_Sector* detectSector(const Fvector& P) override;
+    IRender_Sector* detectSector(const Fvector& P, Fvector& D);
     int translateSector(IRender_Sector* pSector);
     virtual IRender_Target* getTarget() override;
 
